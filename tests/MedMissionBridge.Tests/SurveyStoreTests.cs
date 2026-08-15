@@ -79,4 +79,48 @@ public sealed class SurveyStoreTests : IDisposable
         Assert.Single(rows);
         Assert.Equal(WorklistStatus.Received, rows[0].Status);
     }
+
+    [Fact]
+    public async Task scheduled_excludes_completed_and_cancelled()
+    {
+        await _store.UpsertAsync(Extracted("a"), "{}");
+        await _store.UpsertAsync(Extracted("b"), "{}");
+        await _store.UpsertAsync(Extracted("c"), "{}");
+        Assert.Equal(StatusChangeResult.Changed, await _store.TryChangeStatusAsync("b", WorklistStatus.InProgress));
+        Assert.Equal(StatusChangeResult.Changed, await _store.TryChangeStatusAsync("c", WorklistStatus.Completed));
+
+        var scheduled = await _store.GetScheduledAsync();
+        Assert.Equal(new[] { "a", "b" }, scheduled.Select(r => r.RecordId).OrderBy(x => x));
+    }
+
+    [Fact]
+    public async Task invalid_transition_is_rejected_and_unknown_id_reported()
+    {
+        await _store.UpsertAsync(Extracted("a"), "{}");
+        Assert.Equal(StatusChangeResult.Changed, await _store.TryChangeStatusAsync("a", WorklistStatus.Completed));
+        Assert.Equal(StatusChangeResult.InvalidTransition, await _store.TryChangeStatusAsync("a", WorklistStatus.Cancelled));
+        Assert.Equal(StatusChangeResult.NotFound, await _store.TryChangeStatusAsync("nope", WorklistStatus.Completed));
+    }
+
+    [Fact]
+    public async Task search_matches_name_no_and_city_case_insensitively()
+    {
+        await _store.UpsertAsync(Extracted("a"), "{}");
+        Assert.Single(await _store.ListAsync("juan", null));
+        Assert.Single(await _store.ListAsync("3fbb", null));
+        Assert.Single(await _store.ListAsync("manila", null));
+        Assert.Empty(await _store.ListAsync("zzz", null));
+        Assert.Single(await _store.ListAsync(null, WorklistStatus.Received));
+        Assert.Empty(await _store.ListAsync(null, WorklistStatus.Completed));
+    }
+
+    [Fact]
+    public async Task accession_lookup_returns_latest_updated_match()
+    {
+        await _store.UpsertAsync(Extracted("a"), "{}");
+        await Task.Delay(10);
+        await _store.UpsertAsync(Extracted("b"), "{}"); // same No in the fixture
+        var hit = await _store.GetByAccessionAsync("TAB-3FBB-0001");
+        Assert.Equal("b", hit!.RecordId);
+    }
 }

@@ -64,4 +64,51 @@ public class SurveyStore(IDbContextFactory<BridgeDbContext> factory)
         existing.City = e.City; existing.Barangay = e.Barangay;
         existing.Zip = e.Zip; existing.Address = e.Address;
     }
+
+    public async Task<SurveyRecord?> GetAsync(string recordId)
+    {
+        await using var ctx = await factory.CreateDbContextAsync();
+        return await ctx.Surveys.AsNoTracking().SingleOrDefaultAsync(x => x.RecordId == recordId);
+    }
+
+    public async Task<SurveyRecord?> GetByAccessionAsync(string no)
+    {
+        await using var ctx = await factory.CreateDbContextAsync();
+        return await ctx.Surveys.AsNoTracking().Where(x => x.No == no)
+            .OrderByDescending(x => x.UpdatedAtUtc).FirstOrDefaultAsync();
+    }
+
+    public async Task<IReadOnlyList<SurveyRecord>> ListAsync(string? search, WorklistStatus? status)
+    {
+        await using var ctx = await factory.CreateDbContextAsync();
+        var q = ctx.Surveys.AsNoTracking();
+        if (status is { } s) q = q.Where(x => x.Status == s);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = $"%{search.Trim()}%";
+            q = q.Where(x =>
+                EF.Functions.Like(x.FirstName!, term) || EF.Functions.Like(x.LastName!, term) ||
+                EF.Functions.Like(x.No!, term) || EF.Functions.Like(x.City!, term));
+        }
+        return await q.OrderByDescending(x => x.ReceivedAtUtc).ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<SurveyRecord>> GetScheduledAsync()
+    {
+        await using var ctx = await factory.CreateDbContextAsync();
+        return await ctx.Surveys.AsNoTracking()
+            .Where(x => x.Status == WorklistStatus.Received || x.Status == WorklistStatus.InProgress)
+            .OrderByDescending(x => x.ReceivedAtUtc).ToListAsync();
+    }
+
+    public async Task<StatusChangeResult> TryChangeStatusAsync(string recordId, WorklistStatus to)
+    {
+        await using var ctx = await factory.CreateDbContextAsync();
+        var r = await ctx.Surveys.FindAsync(recordId);
+        if (r is null) return StatusChangeResult.NotFound;
+        if (!StatusRules.CanTransition(r.Status, to)) return StatusChangeResult.InvalidTransition;
+        r.Status = to; r.UpdatedAtUtc = DateTime.UtcNow;
+        await ctx.SaveChangesAsync();
+        return StatusChangeResult.Changed;
+    }
 }
