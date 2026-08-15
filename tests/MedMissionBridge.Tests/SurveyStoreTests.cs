@@ -66,4 +66,17 @@ public sealed class SurveyStoreTests : IDisposable
             Assert.True(r.UpdatedAtUtc >= firstReceived);
         }
     }
+
+    [Fact]
+    public async Task concurrent_first_sends_of_the_same_record_do_not_throw()
+    {
+        await Task.WhenAll(
+            _store.UpsertAsync(Extracted("race"), "v1"),
+            _store.UpsertAsync(Extracted("race"), "v2"));
+
+        using var ctx = _factory.CreateDbContext();
+        var rows = await ctx.Surveys.Where(x => x.RecordId == "race").ToListAsync();
+        Assert.Single(rows);
+        Assert.Equal(WorklistStatus.Received, rows[0].Status);
+    }
 }
