@@ -65,4 +65,13 @@ public class UiApiTests
         Assert.Equal(11112, health.GetProperty("mwlPort").GetInt32());
         Assert.Equal("MEDMISSION", health.GetProperty("mwlAeTitle").GetString());
     }
+
+    [Fact]
+    public async Task root_serves_the_management_page()
+    {
+        using var app = new BridgeAppFactory();
+        var client = app.CreateClient();
+        var html = await client.GetStringAsync("/");
+        Assert.Contains("MedMission Bridge", html);
+    }
 }

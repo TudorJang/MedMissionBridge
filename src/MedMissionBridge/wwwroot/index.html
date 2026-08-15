@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MedMission Bridge</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>MedMission Bridge</h1>
+  <div id="health" class="health">loading…</div>
+</header>
+<main>
+  <section class="controls">
+    <input id="search" type="search" placeholder="Search name / No. / city">
+    <select id="statusFilter">
+      <option value="">All statuses</option>
+      <option>Received</option>
+      <option>InProgress</option>
+      <option>Completed</option>
+      <option>Cancelled</option>
+    </select>
+    <button id="refresh">Refresh</button>
+  </section>
+  <section class="split">
+    <table id="records">
+      <thead>
+        <tr><th>No.</th><th>Name</th><th>City</th><th>Date</th><th>Status</th><th>Received (UTC)</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <aside id="detail" class="detail"><p class="hint">Select a record.</p></aside>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

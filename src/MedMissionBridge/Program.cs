@@ -45,6 +45,8 @@ app.Use(async (ctx, next) =>
     await next();
 });
 // [ANCHOR:STATIC] static web UI goes here
+app.UseDefaultFiles();
+app.UseStaticFiles();
 // [ANCHOR:ENDPOINTS] API endpoints go here
 MedMissionBridge.Ingest.IngestEndpoints.Map(app);
 MedMissionBridge.Ui.UiEndpoints.Map(app);

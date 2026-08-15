@@ -1,0 +1,20 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: #f4f5f2; color: #1c2b2a; }
+header { display: flex; align-items: baseline; gap: 16px; padding: 12px 20px; background: #0d4f4a; color: #fff; }
+header h1 { margin: 0; font-size: 1.2rem; }
+.health { font-size: 0.8rem; opacity: 0.85; }
+main { padding: 16px 20px; }
+.controls { display: flex; gap: 8px; margin-bottom: 12px; }
+.controls input[type=search] { flex: 1; max-width: 360px; padding: 6px 10px; }
+.split { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; }
+table { border-collapse: collapse; width: 100%; background: #fff; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #e2e5e0; font-size: 0.9rem; }
+#records tbody tr { cursor: pointer; }
+#records tbody tr:hover { background: #eef4f3; }
+.detail { background: #fff; padding: 12px 16px; border: 1px solid #e2e5e0; max-height: 80vh; overflow-y: auto; }
+.detail h2 { margin-top: 0; font-size: 1rem; }
+.detail h3 { margin: 14px 0 4px; font-size: 0.85rem; text-transform: capitalize; color: #0d4f4a; }
+.kv td:first-child { color: #5a6c6a; width: 45%; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.actions button { padding: 6px 12px; cursor: pointer; }
+.hint { color: #8a9694; }
