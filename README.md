@@ -26,6 +26,15 @@ Configuration: `src/MedMissionBridge/appsettings.json`, section `Bridge`
 - Payload and semantics: tablet repo `docs/reference/wire-contract.md`.
 - Design: `docs/superpowers/specs/2026-08-15-medmission-bridge-design.md`.
 
+## Package for deployment
+
+    dotnet publish src/MedMissionBridge -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false -o publish
+
+Produces `publish/` (~106 MB): `MedMissionBridge.exe` plus `appsettings.json`
+and `wwwroot/` — copy the whole folder to the field laptop and run the exe;
+no .NET installation is required there. Edit `appsettings.json` (API key!)
+before the first run. Data and logs land in `%ProgramData%\MedMissionBridge\`.
+
 ## Test
 
     dotnet test
