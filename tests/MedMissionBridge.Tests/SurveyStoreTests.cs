@@ -123,4 +123,13 @@ public sealed class SurveyStoreTests : IDisposable
         var hit = await _store.GetByAccessionAsync("TAB-3FBB-0001");
         Assert.Equal("b", hit!.RecordId);
     }
+
+    [Fact]
+    public async Task search_treats_like_wildcards_as_literals()
+    {
+        await _store.UpsertAsync(Extracted("a"), "{}");
+        Assert.Empty(await _store.ListAsync("_uan", null));
+        Assert.Empty(await _store.ListAsync("%", null));
+        Assert.Single(await _store.ListAsync("juan", null));
+    }
 }

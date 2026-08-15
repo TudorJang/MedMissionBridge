@@ -85,10 +85,11 @@ public class SurveyStore(IDbContextFactory<BridgeDbContext> factory)
         if (status is { } s) q = q.Where(x => x.Status == s);
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = $"%{search.Trim()}%";
+            var escaped = search.Trim().Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_");
+            var term = $"%{escaped}%";
             q = q.Where(x =>
-                EF.Functions.Like(x.FirstName!, term) || EF.Functions.Like(x.LastName!, term) ||
-                EF.Functions.Like(x.No!, term) || EF.Functions.Like(x.City!, term));
+                EF.Functions.Like(x.FirstName!, term, @"\") || EF.Functions.Like(x.LastName!, term, @"\") ||
+                EF.Functions.Like(x.No!, term, @"\") || EF.Functions.Like(x.City!, term, @"\"));
         }
         return await q.OrderByDescending(x => x.ReceivedAtUtc).ToListAsync();
     }
