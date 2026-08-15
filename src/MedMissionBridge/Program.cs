@@ -63,6 +63,11 @@ if (!isTesting)
     var mwlServer = new MedMissionBridge.Dicom.MwlServer(bridge.Mwl.Port);
     app.Lifetime.ApplicationStopping.Register(mwlServer.Dispose);
     Log.Information("MWL SCP listening on port {Port}, AE {Ae}", bridge.Mwl.Port, bridge.Mwl.AeTitle);
+    var advertiser = new MedMissionBridge.Mdns.MdnsAdvertiser(
+        bridge.Mdns.ResolveServiceName(), bridge.HttpPort);
+    app.Lifetime.ApplicationStopping.Register(advertiser.Dispose);
+    Log.Information("mDNS advertising {Name} on _medmission._tcp:{Port}",
+        bridge.Mdns.ResolveServiceName(), bridge.HttpPort);
 }
 
 app.Run();
