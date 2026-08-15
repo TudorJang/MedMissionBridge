@@ -34,9 +34,20 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 // [ANCHOR:MIDDLEWARE] loopback gate goes here
+app.Use(async (ctx, next) =>
+{
+    var lanFacing = ctx.Request.Path.StartsWithSegments("/api/v1");
+    if (!lanFacing && !MedMissionBridge.Ui.LoopbackOnly.IsAllowed(ctx))
+    {
+        ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return;
+    }
+    await next();
+});
 // [ANCHOR:STATIC] static web UI goes here
 // [ANCHOR:ENDPOINTS] API endpoints go here
 MedMissionBridge.Ingest.IngestEndpoints.Map(app);
+MedMissionBridge.Ui.UiEndpoints.Map(app);
 // [ANCHOR:SERVERS] MWL server and mDNS advertiser go here (guarded by !isTesting)
 
 app.Run();
