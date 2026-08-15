@@ -35,6 +35,13 @@ public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogge
 
     public Task OnReceiveAssociationRequestAsync(DicomAssociation association)
     {
+        // The AE title (Mwl:AeTitle) is advertised only; it is not enforced here.
+        // Log who connected so an operator can see it in the log, but accept any
+        // calling/called AE — see README.
+        Serilog.Log.Information(
+            "MWL association request: CalledAE={CalledAe}, CallingAE={CallingAe}, RemoteHost={RemoteHost}",
+            association.CalledAE, association.CallingAE, association.RemoteHost);
+
         foreach (var pc in association.PresentationContexts)
         {
             if (pc.AbstractSyntax == DicomUID.Verification
@@ -62,7 +69,11 @@ public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogge
         if (source is not null)
         {
             try { items = await source(); }
-            catch { items = null; }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to load the worklist source for a C-FIND query");
+                items = null;
+            }
         }
         if (items is null)
         {
@@ -71,9 +82,24 @@ public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogge
         }
 
         var query = request.Dataset ?? new DicomDataset();
+        var matchCount = 0;
         foreach (var item in items)
             if (WorklistMatcher.Matches(query, item))
+            {
+                matchCount++;
                 yield return new DicomCFindResponse(request, DicomStatus.Pending) { Dataset = item };
+            }
+
+        // These are query keys typed by the operator of the modality (not tablet
+        // survey data), so logging them is acceptable.
+        var queryDate = query.TryGetSequence(DicomTag.ScheduledProcedureStepSequence, out var qSeq) && qSeq.Items.Count > 0
+            ? qSeq.Items[0].GetSingleValueOrDefault(DicomTag.ScheduledProcedureStepStartDate, string.Empty)
+            : string.Empty;
+        Logger.LogInformation(
+            "C-FIND query PatientID={PatientId} PatientName={PatientName} Date={Date} matched {MatchCount} item(s)",
+            query.GetSingleValueOrDefault(DicomTag.PatientID, string.Empty),
+            query.GetSingleValueOrDefault(DicomTag.PatientName, string.Empty),
+            queryDate, matchCount);
 
         yield return new DicomCFindResponse(request, DicomStatus.Success);
     }

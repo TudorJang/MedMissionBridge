@@ -52,6 +52,11 @@ public class UiApiTests
         var unknownValue = await client.PostAsJsonAsync("/api/ui/records/r-200/status", new { status = "Nonsense" });
         Assert.Equal(HttpStatusCode.BadRequest, unknownValue.StatusCode);
 
+        // Enum.TryParse also accepts the raw numeric value ("2" == Completed);
+        // that must be rejected — only the named statuses are valid input.
+        var numeric = await client.PostAsJsonAsync("/api/ui/records/r-200/status", new { status = "2" });
+        Assert.Equal(HttpStatusCode.BadRequest, numeric.StatusCode);
+
         var missing = await client.PostAsJsonAsync("/api/ui/records/none/status", new { status = "Completed" });
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
@@ -64,6 +69,14 @@ public class UiApiTests
         var health = await client.GetFromJsonAsync<JsonElement>("/api/ui/health");
         Assert.Equal(11112, health.GetProperty("mwlPort").GetInt32());
         Assert.Equal("MEDMISSION", health.GetProperty("mwlAeTitle").GetString());
+        // AE title is advertised only, never enforced by the SCP.
+        Assert.False(health.GetProperty("mwlAeTitleEnforced").GetBoolean());
+        // The MWL/mDNS background servers are skipped entirely in the Testing
+        // environment (see Program.cs [ANCHOR:SERVERS]) — false is honest here.
+        Assert.False(health.GetProperty("mwlRunning").GetBoolean());
+        Assert.False(health.GetProperty("mdnsRunning").GetBoolean());
+        // BridgeAppFactory configures a non-default test key.
+        Assert.False(health.GetProperty("apiKeyIsDefault").GetBoolean());
     }
 
     [Fact]

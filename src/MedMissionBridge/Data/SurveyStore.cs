@@ -1,9 +1,10 @@
 using MedMissionBridge.Ingest;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace MedMissionBridge.Data;
 
-public class SurveyStore(IDbContextFactory<BridgeDbContext> factory)
+public class SurveyStore(IDbContextFactory<BridgeDbContext> factory, ILogger<SurveyStore>? logger = null)
 {
     public async Task UpsertAsync(ExtractedSurvey e, string rawJson)
     {
@@ -33,14 +34,15 @@ public class SurveyStore(IDbContextFactory<BridgeDbContext> factory)
                 await ctx.SaveChangesAsync();
                 return;
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.Sqlite.SqliteException { SqliteErrorCode: 19 })
             {
                 // Two near-simultaneous first-sends of the same RecordId (tablet
                 // double-submit before the first response returns) both see
                 // "no existing row" and both try to insert; the loser hits the
-                // RecordId primary-key constraint here. Fall through and retry
-                // as an update against a fresh context — the winner's row must
-                // exist by now.
+                // RecordId primary-key constraint (SQLite error 19 = SQLITE_CONSTRAINT)
+                // here. Fall through and retry as an update against a fresh
+                // context — the winner's row must exist by now. Any other
+                // DbUpdateException is a real failure and must propagate.
             }
         }
 
@@ -108,8 +110,10 @@ public class SurveyStore(IDbContextFactory<BridgeDbContext> factory)
         var r = await ctx.Surveys.FindAsync(recordId);
         if (r is null) return StatusChangeResult.NotFound;
         if (!StatusRules.CanTransition(r.Status, to)) return StatusChangeResult.InvalidTransition;
+        var from = r.Status;
         r.Status = to; r.UpdatedAtUtc = DateTime.UtcNow;
         await ctx.SaveChangesAsync();
+        logger?.LogInformation("Status {RecordId}: {From} -> {To}", recordId, from, to);
         return StatusChangeResult.Changed;
     }
 }

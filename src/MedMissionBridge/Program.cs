@@ -10,18 +10,28 @@ var isTesting = builder.Environment.IsEnvironment("Testing");
 if (!isTesting)
 {
     Log.Logger = new LoggerConfiguration()
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
         .WriteTo.Console()
         .WriteTo.File(Path.Combine(bridge.ResolveDataDir(), "logs", "bridge-.log"),
             rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
         .CreateLogger();
     builder.Host.UseSerilog();
     builder.WebHost.UseUrls($"http://0.0.0.0:{bridge.HttpPort}");
+
+    if (bridge.ApiKey == "changeme-dev-key" || string.IsNullOrWhiteSpace(bridge.ApiKey))
+    {
+        Log.Warning(
+            "Bridge:ApiKey is left at its default/blank value — tablet ingest on the LAN " +
+            "is effectively unauthenticated. Set a real value in appsettings.json before deploying.");
+    }
 }
 
 // [ANCHOR:SERVICES] later tasks register services below this line
 builder.Services.AddDbContextFactory<MedMissionBridge.Data.BridgeDbContext>(o =>
     o.UseSqlite($"Data Source={bridge.ResolveDbPath()}"));
 builder.Services.AddSingleton<MedMissionBridge.Data.SurveyStore>();
+var runtimeState = new MedMissionBridge.BridgeRuntimeState();
+builder.Services.AddSingleton(runtimeState);
 
 var app = builder.Build();
 
@@ -62,16 +72,45 @@ if (!isTesting)
             .Select(r => MedMissionBridge.Dicom.DicomConversions.BuildWorklistItem(r, bridge.Mwl))
             .ToList();
     };
-    var mwlServer = new MedMissionBridge.Dicom.MwlServer(bridge.Mwl.Port);
-    app.Lifetime.ApplicationStopping.Register(mwlServer.Dispose);
-    Log.Information("MWL SCP listening on port {Port}, AE {Ae}", bridge.Mwl.Port, bridge.Mwl.AeTitle);
-    var advertiser = new MedMissionBridge.Mdns.MdnsAdvertiser(
-        bridge.Mdns.ResolveServiceName(), bridge.HttpPort);
-    app.Lifetime.ApplicationStopping.Register(advertiser.Dispose);
-    Log.Information("mDNS advertising {Name} on _medmission._tcp:{Port}",
-        bridge.Mdns.ResolveServiceName(), bridge.HttpPort);
+
+    // A bound MWL port must not take ingest down with it: log and continue.
+    try
+    {
+        var mwlServer = new MedMissionBridge.Dicom.MwlServer(bridge.Mwl.ListenAddress, bridge.Mwl.Port);
+        app.Lifetime.ApplicationStopping.Register(mwlServer.Dispose);
+        runtimeState.MwlRunning = true;
+        Log.Information("MWL SCP listening on {Address}:{Port}, AE {Ae}",
+            bridge.Mwl.ListenAddress, bridge.Mwl.Port, bridge.Mwl.AeTitle);
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex,
+            "Failed to start the MWL SCP on {Address}:{Port} — the modality worklist will be " +
+            "unavailable, but survey ingest continues normally", bridge.Mwl.ListenAddress, bridge.Mwl.Port);
+    }
+
+    // Same for mDNS: a discovery failure must not take ingest down with it.
+    try
+    {
+        var advertiser = new MedMissionBridge.Mdns.MdnsAdvertiser(
+            bridge.Mdns.ResolveServiceName(), bridge.HttpPort);
+        app.Lifetime.ApplicationStopping.Register(advertiser.Dispose);
+        runtimeState.MdnsRunning = true;
+        Log.Information("mDNS advertising {Name} on _medmission._tcp:{Port}",
+            bridge.Mdns.ResolveServiceName(), bridge.HttpPort);
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex,
+            "Failed to start mDNS advertising for {Name} on port {Port} — tablets will need this " +
+            "laptop's address configured manually, but survey ingest continues normally",
+            bridge.Mdns.ResolveServiceName(), bridge.HttpPort);
+    }
 }
 
 app.Run();
+
+// CloseAndFlush on an unconfigured static logger (Testing env) is a no-op.
+Log.CloseAndFlush();
 
 public partial class Program;

@@ -35,7 +35,11 @@ public static class UiEndpoints
 
         app.MapPost("/api/ui/records/{recordId}/status", async (string recordId, StatusChange body, SurveyStore store) =>
         {
-            if (!Enum.TryParse<WorklistStatus>(body.Status, ignoreCase: true, out var to))
+            // Enum.TryParse also accepts the underlying numeric value (e.g. "2"),
+            // which is not a valid client input — only the named statuses are.
+            if (body.Status.All(char.IsDigit)
+                || !Enum.TryParse<WorklistStatus>(body.Status, ignoreCase: true, out var to)
+                || !Enum.IsDefined(to))
                 return Results.BadRequest();
             return await store.TryChangeStatusAsync(recordId, to) switch
             {
@@ -45,11 +49,16 @@ public static class UiEndpoints
             };
         });
 
-        app.MapGet("/api/ui/health", (BridgeOptions options) => Results.Ok(new
+        app.MapGet("/api/ui/health", (BridgeOptions options, BridgeRuntimeState runtime) => Results.Ok(new
         {
             httpPort = options.HttpPort,
             mwlPort = options.Mwl.Port,
             mwlAeTitle = options.Mwl.AeTitle,
+            // The AE title is advertised only — the SCP accepts any calling/called AE.
+            mwlAeTitleEnforced = false,
+            mwlRunning = runtime.MwlRunning,
+            mdnsRunning = runtime.MdnsRunning,
+            apiKeyIsDefault = string.IsNullOrWhiteSpace(options.ApiKey) || options.ApiKey == "changeme-dev-key",
             dbPath = options.ResolveDbPath(),
             serviceName = options.Mdns.ResolveServiceName(),
         }));

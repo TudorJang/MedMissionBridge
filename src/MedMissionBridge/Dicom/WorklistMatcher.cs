@@ -44,6 +44,10 @@ public static class WorklistMatcher
         if (itemDate.Length == 0) return false;
         var dash = queryDate.IndexOf('-');
         if (dash < 0) return itemDate == queryDate;
+        // A malformed multi-dash range (more than one '-') is trusted-SCU input
+        // (typed by the modality operator, not attacker-controlled over the
+        // network); splitting on the first dash just yields a nonsense
+        // from/to pair that safely matches nothing rather than throwing.
         var from = queryDate[..dash];
         var to = queryDate[(dash + 1)..];
         // yyyyMMdd strings compare correctly as ordinals
