@@ -41,11 +41,11 @@ project):
 
 ## 3. Architecture
 
-One .NET 8 process (`MedMissionBridge.exe`), four units with narrow
+One .NET 9 process (`MedMissionBridge.exe`), four units with narrow
 interfaces:
 
 ```
-MedMissionBridge.exe (.NET 8)
+MedMissionBridge.exe (.NET 9)
 ├─ Ingest API      ASP.NET Core (Kestrel): POST /api/v1/surveys + survey
 │                  lookup GETs. Bound to all interfaces (LAN-facing).
 ├─ Worklist Store  SQLite (single file) via EF Core. Upsert on recordId.
@@ -68,7 +68,7 @@ MedMissionBridge.sln
 └─ tests/MedMissionBridge.Tests/ xUnit tests
 ```
 
-Key dependencies: ASP.NET Core (in .NET 8), `fo-dicom` (5.x),
+Key dependencies: ASP.NET Core (in .NET 9), `fo-dicom` (5.x),
 `Microsoft.EntityFrameworkCore.Sqlite`, an mDNS advertiser library
 (`Makaretu.Dns.Multicast` or equivalent — the implementation plan verifies
 the choice against Windows 11 behavior), `Serilog` (rolling file logs),
