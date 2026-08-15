@@ -35,10 +35,13 @@ public static class UiEndpoints
 
         app.MapPost("/api/ui/records/{recordId}/status", async (string recordId, StatusChange body, SurveyStore store) =>
         {
-            // Enum.TryParse also accepts the underlying numeric value (e.g. "2"),
-            // which is not a valid client input — only the named statuses are.
-            if (body.Status.All(char.IsDigit)
-                || !Enum.TryParse<WorklistStatus>(body.Status, ignoreCase: true, out var to)
+            // Enum.TryParse also accepts the underlying numeric value (e.g. "2" or " 2"),
+            // which is not a valid client input — only the named statuses are. Status can
+            // bind to null when the JSON body omits it, so guard that first.
+            var requested = body.Status?.Trim();
+            if (string.IsNullOrEmpty(requested)
+                || requested.All(char.IsDigit)
+                || !Enum.TryParse<WorklistStatus>(requested, ignoreCase: true, out var to)
                 || !Enum.IsDefined(to))
                 return Results.BadRequest();
             return await store.TryChangeStatusAsync(recordId, to) switch

@@ -5,9 +5,29 @@ const transitions = {
   Cancelled: ["Received"],
 };
 
+// If the bridge stops, the UI must say so instead of silently freezing on
+// stale data — every fetch funnels through here so failures surface once.
+let offline = false;
+async function fetchJson(url, options) {
+  try {
+    const resp = await fetch(url, options);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    if (offline) { offline = false; loadHealth(); }
+    return await resp.json();
+  } catch (e) {
+    if (!offline) {
+      offline = true;
+      document.getElementById("health").textContent = "⚠ bridge unreachable — retrying…";
+    }
+    throw e;
+  }
+}
+
 async function loadHealth() {
-  const h = await (await fetch("/api/ui/health")).json();
+  const h = await fetchJson("/api/ui/health");
   let line = `HTTP :${h.httpPort} · MWL :${h.mwlPort} (${h.mwlAeTitle}) · mDNS ${h.serviceName} · ${h.dbPath}`;
+  if (!h.mwlRunning) line += " ⚠ MWL not running";
+  if (!h.mdnsRunning) line += " ⚠ mDNS not running";
   if (h.apiKeyIsDefault) line += " ⚠ default API key";
   document.getElementById("health").textContent = line;
 }
@@ -18,7 +38,8 @@ async function loadList() {
   const params = new URLSearchParams();
   if (search) params.set("search", search);
   if (status) params.set("status", status);
-  const rows = await (await fetch(`/api/ui/records?${params}`)).json();
+  let rows;
+  try { rows = await fetchJson(`/api/ui/records?${params}`); } catch { return; }
   const tbody = document.querySelector("#records tbody");
   tbody.replaceChildren(...rows.map((r) => {
     const tr = document.createElement("tr");
@@ -41,7 +62,8 @@ function renderValue(v) {
 }
 
 async function showDetail(recordId) {
-  const detail = await (await fetch(`/api/ui/records/${recordId}`)).json();
+  let detail;
+  try { detail = await fetchJson(`/api/ui/records/${encodeURIComponent(recordId)}`); } catch { return; }
   const payload = JSON.parse(detail.rawJson);
   const box = document.getElementById("detail");
   box.replaceChildren();
@@ -56,12 +78,16 @@ async function showDetail(recordId) {
     const b = document.createElement("button");
     b.textContent = `→ ${to}`;
     b.addEventListener("click", async () => {
-      const resp = await fetch(`/api/ui/records/${recordId}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: to }),
-      });
-      if (!resp.ok) alert(`Status change failed (${resp.status})`);
+      try {
+        const resp = await fetch(`/api/ui/records/${encodeURIComponent(recordId)}/status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: to }),
+        });
+        if (!resp.ok) alert(`Status change failed (${resp.status})`);
+      } catch {
+        alert("Status change failed: bridge unreachable");
+      }
       await loadList();
       await showDetail(recordId);
     });

@@ -1642,7 +1642,7 @@ public class MwlRoundTripTests
             [Item("r1", "TAB-1"), Item("r2", "TAB-2")]);
 
         var port = FreePort();
-        using var server = new MwlServer(port);
+        using var server = new MwlServer("127.0.0.1", port);
 
         var client = DicomClientFactory.Create("127.0.0.1", port, false, "TESTSCU", "MEDMISSION");
         var found = new List<DicomDataset>();
@@ -1665,7 +1665,7 @@ public class MwlRoundTripTests
         DicomSetup.EnsureInitialized();
         MwlService.WorklistSource = () => Task.FromResult<IReadOnlyList<DicomDataset>>([]);
         var port = FreePort();
-        using var server = new MwlServer(port);
+        using var server = new MwlServer("127.0.0.1", port);
 
         var client = DicomClientFactory.Create("127.0.0.1", port, false, "TESTSCU", "MEDMISSION");
         DicomStatus? status = null;
@@ -1778,7 +1778,7 @@ namespace MedMissionBridge.Dicom;
 public sealed class MwlServer : IDisposable
 {
     private readonly IDicomServer _server;
-    public MwlServer(int port) => _server = DicomServerFactory.Create<MwlService>(port);
+    public MwlServer(string ipAddress, int port) => _server = DicomServerFactory.Create<MwlService>(ipAddress, port);
     public void Dispose() => _server.Dispose();
 }
 ```

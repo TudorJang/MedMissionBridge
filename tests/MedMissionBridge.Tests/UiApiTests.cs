@@ -57,6 +57,14 @@ public class UiApiTests
         var numeric = await client.PostAsJsonAsync("/api/ui/records/r-200/status", new { status = "2" });
         Assert.Equal(HttpStatusCode.BadRequest, numeric.StatusCode);
 
+        // Whitespace-padded numerics must not sneak past the digit check.
+        var paddedNumeric = await client.PostAsJsonAsync("/api/ui/records/r-200/status", new { status = " 2" });
+        Assert.Equal(HttpStatusCode.BadRequest, paddedNumeric.StatusCode);
+
+        // A body that omits status (binds to null) is a clean 400, not a 500.
+        var noStatus = await client.PostAsJsonAsync("/api/ui/records/r-200/status", new { });
+        Assert.Equal(HttpStatusCode.BadRequest, noStatus.StatusCode);
+
         var missing = await client.PostAsJsonAsync("/api/ui/records/none/status", new { status = "Completed" });
         Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
