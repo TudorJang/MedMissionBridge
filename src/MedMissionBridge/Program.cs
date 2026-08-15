@@ -36,6 +36,7 @@ using (var scope = app.Services.CreateScope())
 // [ANCHOR:MIDDLEWARE] loopback gate goes here
 // [ANCHOR:STATIC] static web UI goes here
 // [ANCHOR:ENDPOINTS] API endpoints go here
+MedMissionBridge.Ingest.IngestEndpoints.Map(app);
 // [ANCHOR:SERVERS] MWL server and mDNS advertiser go here (guarded by !isTesting)
 
 app.Run();
