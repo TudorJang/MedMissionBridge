@@ -42,4 +42,42 @@ public class IngestApiTests
         Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(Post("{}"))).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(Post("not json"))).StatusCode);
     }
+
+    [Fact]
+    public async Task lookup_returns_stored_json_byte_identical()
+    {
+        using var app = new BridgeAppFactory();
+        var client = app.CreateClient();
+        await client.SendAsync(Post(Payload));
+
+        var byId = new HttpRequestMessage(HttpMethod.Get, "/api/v1/surveys/r-100");
+        byId.Headers.Add("X-Api-Key", BridgeAppFactory.ApiKey);
+        var r1 = await client.SendAsync(byId);
+        Assert.Equal(HttpStatusCode.OK, r1.StatusCode);
+        Assert.Equal(Payload, await r1.Content.ReadAsStringAsync());
+
+        var byAcc = new HttpRequestMessage(HttpMethod.Get, "/api/v1/surveys?accession=TAB-1");
+        byAcc.Headers.Add("X-Api-Key", BridgeAppFactory.ApiKey);
+        var r2 = await client.SendAsync(byAcc);
+        Assert.Equal(HttpStatusCode.OK, r2.StatusCode);
+        Assert.Equal(Payload, await r2.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task lookup_edge_cases()
+    {
+        using var app = new BridgeAppFactory();
+        var client = app.CreateClient();
+
+        var noKey = await client.GetAsync("/api/v1/surveys/r-100");
+        Assert.Equal(HttpStatusCode.Unauthorized, noKey.StatusCode);
+
+        var unknown = new HttpRequestMessage(HttpMethod.Get, "/api/v1/surveys/none");
+        unknown.Headers.Add("X-Api-Key", BridgeAppFactory.ApiKey);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.SendAsync(unknown)).StatusCode);
+
+        var noAccession = new HttpRequestMessage(HttpMethod.Get, "/api/v1/surveys");
+        noAccession.Headers.Add("X-Api-Key", BridgeAppFactory.ApiKey);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(noAccession)).StatusCode);
+    }
 }
