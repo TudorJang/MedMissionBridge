@@ -43,6 +43,19 @@ public class PayloadExtractorTests
         Assert.Null(e.FirstName);
     }
 
+    [Fact]
+    public void extracts_non_ascii_names_and_places_exactly()
+    {
+        var json = """
+            {"recordId":"nx-1","patient":{"firstName":"Juán","lastName":"Dela Cruz","barangay":"Peñafrancia"},
+             "medicalHistory":{},"vitalSigns":{},"symptoms":[],"tbInfo":{},"smoking":{},
+             "alcohol":{},"environmentalExposure":{}}
+            """;
+        Assert.True(PayloadExtractor.TryExtract(json, out var e));
+        Assert.Equal("Juán", e!.FirstName);
+        Assert.Equal("Peñafrancia", e.Barangay);
+    }
+
     [Theory]
     [InlineData("not json at all")]
     [InlineData("{}")]

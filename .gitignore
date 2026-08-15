@@ -6,6 +6,10 @@
 # dotenv files
 .env
 
+# Accidental shell-redirect captures
+/stdout.txt
+/stderr.txt
+
 # User-specific files
 *.rsuser
 *.suo
