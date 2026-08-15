@@ -34,7 +34,7 @@ public class MwlRoundTripTests
             [Item("r1", "TAB-1"), Item("r2", "TAB-2")]);
 
         var port = FreePort();
-        using var server = new MwlServer(port);
+        using var server = new MwlServer("127.0.0.1", port);
 
         var client = DicomClientFactory.Create("127.0.0.1", port, false, "TESTSCU", "MEDMISSION");
         var found = new List<DicomDataset>();
@@ -57,7 +57,7 @@ public class MwlRoundTripTests
         DicomSetup.EnsureInitialized();
         MwlService.WorklistSource = () => Task.FromResult<IReadOnlyList<DicomDataset>>([]);
         var port = FreePort();
-        using var server = new MwlServer(port);
+        using var server = new MwlServer("127.0.0.1", port);
 
         var client = DicomClientFactory.Create("127.0.0.1", port, false, "TESTSCU", "MEDMISSION");
         DicomStatus? status = null;
@@ -67,5 +67,34 @@ public class MwlRoundTripTests
         await client.SendAsync();
 
         Assert.Equal(DicomStatus.Success, status);
+    }
+
+    [Fact]
+    public async Task cfind_round_trips_non_ascii_patient_names()
+    {
+        DicomSetup.EnsureInitialized();
+        var item = DicomConversions.BuildWorklistItem(new SurveyRecord
+        {
+            RecordId = "nx1", RawJson = "{}", No = "TAB-NX",
+            FirstName = "Juán", LastName = "Peña", Date = "2026-08-14",
+        }, new MwlOptions());
+        MwlService.WorklistSource = () => Task.FromResult<IReadOnlyList<DicomDataset>>([item]);
+
+        var port = FreePort();
+        using var server = new MwlServer("127.0.0.1", port);
+
+        var client = DicomClientFactory.Create("127.0.0.1", port, false, "TESTSCU", "MEDMISSION");
+        var found = new List<DicomDataset>();
+        var request = DicomCFindRequest.CreateWorklistQuery();
+        request.Dataset.AddOrUpdate(DicomTag.PatientID, "nx1");
+        request.OnResponseReceived += (_, resp) =>
+        {
+            if (resp.Status == DicomStatus.Pending && resp.HasDataset) found.Add(resp.Dataset);
+        };
+        await client.AddRequestAsync(request);
+        await client.SendAsync();
+
+        var hit = Assert.Single(found);
+        Assert.Equal("Peña^Juán", hit.GetSingleValue<string>(DicomTag.PatientName));
     }
 }

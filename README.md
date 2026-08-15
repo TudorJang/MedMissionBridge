@@ -11,7 +11,10 @@ co-located medical software.
 - Management UI: http://localhost:18080/ (loopback-only)
 - Tablet ingest: POST /api/v1/surveys with `X-Api-Key` (LAN)
 - Survey lookup: GET /api/v1/surveys/{recordId} or ?accession= (LAN, keyed)
-- MWL SCP: port 11112, AE `MEDMISSION` (C-ECHO supported)
+- MWL SCP: port 11112, AE `MEDMISSION` (C-ECHO supported). The AE title is
+  advertised, not enforced — the SCP accepts any calling/called AE. If only
+  the co-located medical software queries MWL, set `Mwl:ListenAddress` to
+  `127.0.0.1` to take the DICOM port off the LAN.
 - mDNS: advertises `_medmission._tcp` for tablet discovery
 
 Configuration: `src/MedMissionBridge/appsettings.json`, section `Bridge`

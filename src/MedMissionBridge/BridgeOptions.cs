@@ -25,6 +25,9 @@ public class BridgeOptions
 public class MwlOptions
 {
     public int Port { get; set; } = 11112;
+    /// <summary>0.0.0.0 = LAN-reachable (default). Set to 127.0.0.1 to keep the
+    /// DICOM port off the LAN when only co-located software queries MWL.</summary>
+    public string ListenAddress { get; set; } = "0.0.0.0";
     public string AeTitle { get; set; } = "MEDMISSION";
     public string Modality { get; set; } = "CR";
     public string StationAeTitle { get; set; } = "MEDMISSION";

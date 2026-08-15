@@ -7,8 +7,9 @@ const transitions = {
 
 async function loadHealth() {
   const h = await (await fetch("/api/ui/health")).json();
-  document.getElementById("health").textContent =
-    `HTTP :${h.httpPort} · MWL :${h.mwlPort} (${h.mwlAeTitle}) · mDNS ${h.serviceName} · ${h.dbPath}`;
+  let line = `HTTP :${h.httpPort} · MWL :${h.mwlPort} (${h.mwlAeTitle}) · mDNS ${h.serviceName} · ${h.dbPath}`;
+  if (h.apiKeyIsDefault) line += " ⚠ default API key";
+  document.getElementById("health").textContent = line;
 }
 
 async function loadList() {
