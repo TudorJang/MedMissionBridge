@@ -49,6 +49,21 @@ app.Use(async (ctx, next) =>
 MedMissionBridge.Ingest.IngestEndpoints.Map(app);
 MedMissionBridge.Ui.UiEndpoints.Map(app);
 // [ANCHOR:SERVERS] MWL server and mDNS advertiser go here (guarded by !isTesting)
+if (!isTesting)
+{
+    MedMissionBridge.Dicom.DicomSetup.EnsureInitialized();
+    var store = app.Services.GetRequiredService<MedMissionBridge.Data.SurveyStore>();
+    MedMissionBridge.Dicom.MwlService.WorklistSource = async () =>
+    {
+        var scheduled = await store.GetScheduledAsync();
+        return scheduled
+            .Select(r => MedMissionBridge.Dicom.DicomConversions.BuildWorklistItem(r, bridge.Mwl))
+            .ToList();
+    };
+    var mwlServer = new MedMissionBridge.Dicom.MwlServer(bridge.Mwl.Port);
+    app.Lifetime.ApplicationStopping.Register(mwlServer.Dispose);
+    Log.Information("MWL SCP listening on port {Port}, AE {Ae}", bridge.Mwl.Port, bridge.Mwl.AeTitle);
+}
 
 app.Run();
 
