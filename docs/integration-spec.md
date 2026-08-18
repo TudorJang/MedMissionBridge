@@ -454,10 +454,12 @@ the ones that decide the shape of the integration.
    a name before a site opens.
 5. **AE title enforcement.** Any calling AE is accepted today, logged but not checked.
    Say the word and we will restrict it to the console's AE.
-6. **Where do the images live?** The console stores locally and can send to PACS or a USB
-   drive. If a site has no PACS, images stay on that laptop only. The bridge could take a
-   Storage SCP role so images and surveys end up in one place — a scope decision, not a
-   small one.
+6. **Where do the images actually end up?** A PACS server PC travels to sites, but
+   network trouble means it often goes unused, and then a day of images — 10.8 GB at 150
+   patients — stays on the acquisition laptop. The bridge could take a Storage SCP role so
+   images and surveys land in one place that needs no server of its own, which is a real
+   scope decision rather than a small one, but it is the same problem the survey side
+   already solved by not needing a server.
 7. **TLS.** Deferred by agreement on the premise of an isolated field network. If the
    laptop will ever sit on a routed hospital network, this needs revisiting before
    go-live — the API key crosses the wire in plaintext today.

@@ -145,8 +145,12 @@ Worth confirming that is the intended protocol.
 47 studies flagged (29.4 %); 28 have Tuberculosis ≥ 50 %, the highest 97.16 %.
 
 **Storage** — 72.1 MB per study, 11.54 GB for 160. At 150 patients a day that is
-**10.8 GB/day** on the laptop. Where there is no PACS on site, a laptop holds a few days
-at most.
+**10.8 GB/day** on the laptop.
+
+A PACS server PC does travel to sites, but network trouble means it often goes unused,
+and on those days everything stays on the acquisition laptop. So the laptop has to be
+sized for the whole campaign, not for the gap until the next transfer, and someone has to
+know how much room is left before the day starts rather than after it fills.
 
 ---
 
@@ -159,7 +163,8 @@ at most.
 | Private block `1001` under `MDAI_PRIVATE_CREATOR` | Confirmed as the house convention — already aligned |
 | Character set | The risk is real but not urgent: all 160 names are ASCII, `PENARANDA` rather than `PEÑARANDA` |
 | Survey lost at `ai.dcm` | Open. Depends on which image the reading workflow uses |
-| Site storage | 10.8 GB/day is an operations question the survey database (a few MB) does not touch |
+| Site storage | 10.8 GB/day of images, against a survey database of a few MB. A PACS server PC travels to sites but is often unusable on the site network, so images accumulate on the laptop |
+| Network fragility | The same field network that keeps PACS unused is the one the tablets use. The bridge needs no server and tablets hold surveys until it answers, so a bad network day costs a delay rather than data — worth stating out loud, because it is the failure mode the site already knows |
 
 ## Reproducing this
 
