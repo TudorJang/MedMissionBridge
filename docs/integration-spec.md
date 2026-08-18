@@ -86,17 +86,43 @@ The bridge returns the full item dataset regardless of which return keys you req
 | Patient ID | `(0010,0020)` | `recordId` | **always** |
 | Patient Birth Date | `(0010,0030)` | `patient.birthDate` converted to `YYYYMMDD` | parseable date present |
 | Patient Sex | `(0010,0040)` | `MALE` becomes `M`, `FEMALE` becomes `F` | gender present |
+| Patient Age | `(0010,1010)` | derived from birth date, `nnnY` | parseable birth date |
+| Patient Address | `(0010,1040)` | street, barangay, city, province, region, zip | any present |
 | Accession Number | `(0008,0050)` | `no` | `no` present |
+| Referring Physician | `(0008,0090)` | `Bridge:Mwl:ReferringPhysician` | configured |
+| Study Instance UID | `(0020,000D)` | derived from `recordId`, arc `2.25` | **always** |
+| Study Description | `(0008,1030)` | survey summary, below | always |
+| Requested Procedure Description | `(0032,1060)` | survey summary, below | always |
+| Requested Procedure ID | `(0040,1001)` | `no`, truncated to 16 | `no` present |
 | Scheduled Procedure Step Sequence | `(0040,0100)` | one item, below | always |
 | — SPS Start Date | `(0040,0002)` | survey `date`, else today | always |
 | — SPS Start Time | `(0040,0003)` | local time the survey arrived, `HHMMSS` | always |
 | — Modality | `(0008,0060)` | `Bridge:Mwl:Modality`, default `CR` | always |
 | — Scheduled Station AE Title | `(0040,0001)` | `Bridge:Mwl:StationAeTitle` | always |
-| — SPS Description | `(0040,0007)` | `Bridge:Mwl:ProcedureDescription` | always |
+| — SPS Description | `(0040,0007)` | survey summary, below | always |
+| — SPS ID | `(0040,0009)` | `no`, truncated to 16 | `no` present |
+| — SPS Status | `(0040,0020)` | `SCHEDULED` | always |
+
+The Study Instance UID is derived from the record id rather than stored, so repeated
+queries for the same survey always return the same UID. It uses the `2.25` arc, which is
+reserved for UUID-derived identifiers, so no organisation root has to be registered.
+
+### The description fields carry a survey summary
+
+A console that reads the worklist and has no way to call the survey API would otherwise
+see nothing a patient answered. The three description fields therefore carry the findings
+that change how a screening chest film is read, in one line inside the 64-character DICOM
+limit:
+
+    TB scr: cough2w,hemoptysis,nightsweats,prevTB,contact
+
+Included when reported: cough for two weeks or more, blood in sputum, night sweats,
+weight loss, fever; and from the TB history, a previous diagnosis or close contact with
+an active case — a **`YES` only**, never a "don't know". A survey with none of these
+falls back to `Bridge:Mwl:ProcedureDescription`. The summary is a prompt for the
+operator, not a substitute for the full survey over REST.
 
 **Patient Name is not always present, Patient ID always is.** Key your side on Patient ID.
-Study Instance UID, Requested Procedure ID and Scheduled Procedure Step ID are **not**
-supplied — see [Open items](#12-open-items) if your console requires them.
 
 ## 6. Which records appear on the worklist
 
@@ -313,29 +339,36 @@ If the worklist is empty, check that at least one survey sits in `Received` or
 
 ## 12. Open items
 
-Points where we need a decision from your side. None of them block a read-only
-integration today.
+Written against MDVizio-X AI 1.0.0 as documented in its user manual. Items 1 and 2 are
+the ones that decide the shape of the integration.
 
-1. **Does the console support MPPS?** This is the first thing to settle, because it
-   answers items 2 and 3 at once and needs no work in your software at all. If the console
-   can send Modality Performed Procedure Step, point it at the bridge: N-CREATE moves the
-   record to InProgress when acquisition starts and N-SET to Completed when it ends, so
-   the worklist empties itself and nobody has to remember to clear it. The N-CREATE also
-   carries the Study Instance UID the console generated, which gives us a reliable link
-   from image to survey. Tell us the console model and whether its configuration exposes
-   an MPPS destination; the bridge does not implement the MPPS SCP yet.
-2. **Who marks a study complete, if MPPS is unavailable.** Today an operator does it in
-   the bridge UI, and a worklist nobody clears grows all day. Falling back on a
-   status-change API is small work on our side but needs a trigger from your software.
-3. **Study Instance UID / Requested Procedure ID.** Not currently emitted in worklist
-   responses. Some consoles require them to build the study. If yours does, tell us the
-   attributes and we will generate and return them — MPPS would also settle where the UID
-   comes from.
-4. **AE title enforcement.** Currently any AE is accepted, logged but not checked. Say
-   the word and we will restrict to your calling AE.
-5. **TLS.** Deferred by agreement on the premise of an isolated field network. If the
+1. **MPPS — confirmed available, needs turning on.** The manual documents an MPPS
+   destination under Settings → Network alongside Worklist and PACS. Point it at the
+   bridge and the console announces acquisition start and end by itself: N-CREATE moves
+   the record to InProgress, N-SET to Completed, and the worklist empties itself with
+   nobody remembering to clear it. **The bridge does not implement the MPPS SCP yet** —
+   this is our work, not yours, and we need the console's client AE title and the port
+   you want us to listen on.
+2. **The survey API cannot be reached from MDVizio-X.** The console has no HTTP client,
+   so `GET /api/v1/surveys/…` is unusable from it as shipped. Two ways forward, and they
+   are not exclusive: the worklist description fields now carry a summary of the findings
+   that matter for a chest read (section 5), which needs nothing from your side; and for
+   the full survey, either MDVizio-X gains a small REST call or the operator reads it on
+   the bridge's own page. Tell us which of those fits your roadmap.
+3. **Modality — `CR` or `DX`?** The bridge sends `CR` by default and the console filters
+   on both. If the detector reports DX, say so and we will change the setting.
+4. **Character set.** The bridge always declares `ISO_IR 192` (UTF-8). The console has a
+   character-set setting of its own; if it is left on a Latin-1 default, non-ASCII names
+   will not survive the trip. Worth checking once with a real name.
+5. **AE title enforcement.** Any calling AE is accepted today, logged but not checked.
+   Say the word and we will restrict it to the console's AE.
+6. **Where do the images live?** The console stores locally and can send to PACS or a USB
+   drive. If a site has no PACS, images stay on that laptop only. The bridge could take a
+   Storage SCP role so images and surveys end up in one place — a scope decision, not a
+   small one.
+7. **TLS.** Deferred by agreement on the premise of an isolated field network. If the
    laptop will ever sit on a routed hospital network, this needs revisiting before
    go-live — the API key crosses the wire in plaintext today.
-6. **Accession uniqueness.** `no` is assembled on the tablet from a device prefix and a
+8. **Accession uniqueness.** `no` is assembled on the tablet from a device prefix and a
    counter; two tablets with the same prefix can collide. If your side keys on accession,
    we should tighten the format.

@@ -40,6 +40,10 @@ public class MwlOptions
     public string Modality { get; set; } = "CR";
     public string StationAeTitle { get; set; } = "MEDMISSION";
     public string ProcedureDescription { get; set; } = "TB Screening Chest X-Ray";
+
+    /// <summary>Shown in the console's R.Physician column. Empty leaves the column blank,
+    /// which is honest for a screening campaign with no referring doctor.</summary>
+    public string ReferringPhysician { get; set; } = "";
 }
 
 public class MdnsOptions
