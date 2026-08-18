@@ -1,4 +1,5 @@
 using MedMissionBridge.Data;
+using MedMissionBridge.Deployment;
 
 namespace MedMissionBridge.Ui;
 
@@ -68,6 +69,10 @@ public static class UiEndpoints
             apiKeySource = runtime.ApiKeySource.ToString(),
             dbPath = options.ResolveDbPath(),
             serviceName = options.Mdns.ResolveServiceName(),
+            // The per-laptop deployment checks, run here instead of by an operator
+            // working through the README at a screening site.
+            diagnostics = FieldDiagnostics.Build(options, runtime, runtime.ExcludedTcpPorts)
+                .Select(d => new { severity = d.Severity.ToString(), message = d.Message }),
         }));
     }
 }

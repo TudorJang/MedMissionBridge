@@ -36,6 +36,18 @@ async function loadHealth() {
   document.getElementById("apiKeyNote").textContent = h.apiKeySource === "Generated"
     ? "generated for this laptop on first run — enter it on every tablet"
     : "set in appsettings.json";
+
+  // The per-laptop deployment checks. Warnings first: at a screening site the
+  // operator reads the top of the page and nothing else.
+  const list = document.getElementById("diagnostics");
+  const ordered = (h.diagnostics ?? []).slice().sort((a, b) =>
+    (a.severity === "Warning" ? 0 : 1) - (b.severity === "Warning" ? 0 : 1));
+  list.replaceChildren(...ordered.map((d) => {
+    const li = document.createElement("li");
+    li.className = d.severity === "Warning" ? "diag warn" : "diag info";
+    li.textContent = `${d.severity === "Warning" ? "⚠" : "ⓘ"} ${d.message}`;
+    return li;
+  }));
 }
 
 async function loadList() {

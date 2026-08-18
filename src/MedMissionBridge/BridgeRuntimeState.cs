@@ -1,3 +1,5 @@
+using MedMissionBridge.Deployment;
+
 namespace MedMissionBridge;
 
 /// <summary>
@@ -19,4 +21,8 @@ public sealed class BridgeRuntimeState
     /// on first start. Health reports it so the operator knows which key the tablets
     /// need and where it came from.</summary>
     public ApiKeySource ApiKeySource { get; set; } = ApiKeySource.Configured;
+
+    /// <summary>TCP ranges Windows reserved on this laptop, read once at startup.
+    /// Empty when they could not be read — the diagnostics then stay generic.</summary>
+    public IReadOnlyList<PortRange> ExcludedTcpPorts { get; set; } = [];
 }

@@ -32,9 +32,9 @@ you pull them out. The bridge never calls your software.
 | mDNS advertisement | `_medmission._tcp` on the HTTP port | `Bridge:Mdns:*` |
 
 **Confirm the MWL port per laptop before you hardcode it.** Windows reserves TCP ranges
-for Hyper-V/WinNAT and `11112` falls inside one on some machines. Where that happens the
-site runs on `12112`. Ask the operator, or read `mwlPort` from the laptop's health panel
-at `http://127.0.0.1:18080/`.
+for Hyper-V/WinNAT and `11112` falls inside one on some machines; the bridge detects this
+and the site then runs on `12112` or similar. Ask the operator, who can read the port off
+the laptop's management page at `http://127.0.0.1:18080/`.
 
 The management UI (`/api/ui/*` and the web pages) is **loopback-only** — requests from
 the LAN get `403`. Do not build against it; it is an operator tool, not an interface.

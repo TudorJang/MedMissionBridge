@@ -1,5 +1,6 @@
 using MedMissionBridge;
 using MedMissionBridge.Data;
+using MedMissionBridge.Deployment;
 using MedMissionBridge.Dicom;
 using MedMissionBridge.Ingest;
 using MedMissionBridge.Mdns;
@@ -82,6 +83,9 @@ if (!isTesting)
         var scheduled = await store.GetScheduledAsync();
         return scheduled.Select(r => DicomConversions.BuildWorklistItem(r, bridge.Mwl)).ToList();
     };
+
+    // Read before starting the SCP so a bind failure can name the range in the way.
+    runtimeState.ExcludedTcpPorts = PortExclusions.FromSystem();
 
     // A bound MWL port must not take ingest down with it: log and continue.
     try

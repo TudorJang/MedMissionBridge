@@ -48,22 +48,27 @@ and `wwwroot/` — copy the whole folder to the field laptop and run the exe;
 no .NET installation is required there. Set the ports in `appsettings.json` if the
 site needs non-default ones; the API key takes care of itself (see above). Data and logs land in `%ProgramData%\MedMissionBridge\`.
 
-### Check these two on each field laptop
+### Check the page on each field laptop
 
-Open `http://127.0.0.1:18080/` after the first run and read the health panel.
+Open `http://127.0.0.1:18080/` after the first run. The bridge runs the per-laptop
+deployment checks itself and prints what it found above the record list; act on any
+line marked ⚠ before the site opens. Nothing else has to be verified by hand.
 
-- **`mwlRunning` false.** Windows reserves TCP ranges for Hyper-V and WinNAT, and
-  the default MWL port 11112 falls inside one on some machines — the DICOM server
-  then fails to bind with a socket access error while ingest keeps working. Run
-  `netsh int ipv4 show excludedportrange protocol=tcp`; if 11112 is listed, set
-  `Bridge.Mwl.Port` to a free port (12112 works) and tell the X-ray software the
-  new port.
-- **`mdnsAddresses` shows an address tablets cannot reach.** The bridge advertises
-  only NICs that look like the real LAN, but a laptop with an unusual VPN or
-  virtual adapter can still fool the detection. Whatever is listed here is exactly
-  what tablets are told to connect to, so if it is not this laptop's LAN address,
-  pin it with `Bridge.Mdns.AdvertiseAddress`. Tablets can always fall back to
-  entering the address by hand.
+Two of them are worth knowing in advance, because both are laptop-specific and
+neither is the bridge misbehaving:
+
+- **The MWL port failed to bind.** Windows reserves TCP ranges for Hyper-V and
+  WinNAT, and the default port 11112 falls inside one on some machines. The bridge
+  reads the reservations (`netsh int ipv4 show excludedportrange protocol=tcp`),
+  says which range is in the way, and names a free port to switch to — set
+  `Bridge:Mwl:Port` to it, restart, and tell the X-ray software the new port.
+  Survey ingest keeps working throughout; only the worklist is down.
+- **The advertised address may not be the field LAN one.** The bridge advertises
+  only NICs that look like the real LAN, but an unusual VPN or virtual adapter can
+  still fool the detection, and only a person standing next to both machines can
+  confirm the address. The page always states the address tablets are given; if it
+  is wrong, pin `Bridge:Mdns:AdvertiseAddress`. Tablets can also be given the
+  address by hand.
 
 ## Test
 
