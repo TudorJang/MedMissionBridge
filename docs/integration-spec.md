@@ -64,11 +64,16 @@ carrying only unsupported keys returns every scheduled item.
 |---|---|---|
 | Patient ID | `(0010,0020)` | Exact, case-sensitive |
 | Patient Name | `(0010,0010)` | Wildcard `*` and `?`, case-**in**sensitive |
+| Accession Number | `(0008,0050)` | Wildcard `*` and `?`, case-**in**sensitive |
 | Modality | `(0008,0060)` inside SPS sequence | Exact |
 | Scheduled Procedure Step Start Date | `(0040,0002)` inside SPS sequence | Exact `YYYYMMDD`, or range `YYYYMMDD-YYYYMMDD`, or open range `YYYYMMDD-` / `-YYYYMMDD` |
 
 Empty or absent keys are treated as "match everything", per the DICOM matching rules.
 The usual console query — today's date plus modality — works unchanged.
+
+Accession is deliberately forgiving on case and accepts wildcards, because it is the
+number printed on the form in the patient's hand and gets typed at a console with a long
+list already on screen. A record with no accession never matches an accession query.
 
 ## 5. DICOM MWL — returned item
 
@@ -311,17 +316,26 @@ If the worklist is empty, check that at least one survey sits in `Received` or
 Points where we need a decision from your side. None of them block a read-only
 integration today.
 
-1. **Study Instance UID / Requested Procedure ID.** Not currently emitted. Some consoles
-   require them to build the study. If yours does, tell us the attributes and we will
-   generate and return them.
-2. **Who marks a study complete.** Today an operator does it in the bridge UI. If your
-   software knows when acquisition finished, a status-change API is the better source of
-   truth. Small change on our side, needs your trigger.
-3. **AE title enforcement.** Currently any AE is accepted, logged but not checked. Say
+1. **Does the console support MPPS?** This is the first thing to settle, because it
+   answers items 2 and 3 at once and needs no work in your software at all. If the console
+   can send Modality Performed Procedure Step, point it at the bridge: N-CREATE moves the
+   record to InProgress when acquisition starts and N-SET to Completed when it ends, so
+   the worklist empties itself and nobody has to remember to clear it. The N-CREATE also
+   carries the Study Instance UID the console generated, which gives us a reliable link
+   from image to survey. Tell us the console model and whether its configuration exposes
+   an MPPS destination; the bridge does not implement the MPPS SCP yet.
+2. **Who marks a study complete, if MPPS is unavailable.** Today an operator does it in
+   the bridge UI, and a worklist nobody clears grows all day. Falling back on a
+   status-change API is small work on our side but needs a trigger from your software.
+3. **Study Instance UID / Requested Procedure ID.** Not currently emitted in worklist
+   responses. Some consoles require them to build the study. If yours does, tell us the
+   attributes and we will generate and return them — MPPS would also settle where the UID
+   comes from.
+4. **AE title enforcement.** Currently any AE is accepted, logged but not checked. Say
    the word and we will restrict to your calling AE.
-4. **TLS.** Deferred by agreement on the premise of an isolated field network. If the
+5. **TLS.** Deferred by agreement on the premise of an isolated field network. If the
    laptop will ever sit on a routed hospital network, this needs revisiting before
    go-live — the API key crosses the wire in plaintext today.
-5. **Accession uniqueness.** `no` is assembled on the tablet from a device prefix and a
+6. **Accession uniqueness.** `no` is assembled on the tablet from a device prefix and a
    counter; two tablets with the same prefix can collide. If your side keys on accession,
    we should tighten the format.

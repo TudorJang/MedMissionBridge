@@ -13,6 +13,13 @@ public static class WorklistMatcher
         var qName = Get(query, DicomTag.PatientName);
         if (qName.Length > 0 && !WildcardMatches(qName, Get(item, DicomTag.PatientName))) return false;
 
+        // The accession number is printed on the form the patient carries, so it is
+        // what an operator types at a console with a long list on screen. Wildcards
+        // and case are both forgiving here for the same reason.
+        var qAccession = Get(query, DicomTag.AccessionNumber);
+        if (qAccession.Length > 0
+            && !WildcardMatches(qAccession, Get(item, DicomTag.AccessionNumber))) return false;
+
         if (query.TryGetSequence(DicomTag.ScheduledProcedureStepSequence, out var qSeq)
             && qSeq.Items.Count > 0)
         {

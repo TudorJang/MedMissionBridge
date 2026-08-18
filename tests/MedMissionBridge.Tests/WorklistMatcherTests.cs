@@ -33,6 +33,28 @@ public class WorklistMatcherTests
             Query((q, _) => q.Add(DicomTag.PatientID, id)), Item()));
 
     [Theory]
+    [InlineData("TAB-1", true)]
+    [InlineData("tab-1", true)]        // typed off a form by hand, case ignored
+    [InlineData("TAB-*", true)]
+    [InlineData("TAB-2", false)]
+    public void accession_number_matches(string accession, bool expected) =>
+        // The number printed on the form is what an operator has to hand at the
+        // console; without this key the query returned every scheduled patient.
+        Assert.Equal(expected, WorklistMatcher.Matches(
+            Query((q, _) => q.Add(DicomTag.AccessionNumber, accession)), Item()));
+
+    [Fact]
+    public void an_item_without_an_accession_number_does_not_match_one()
+    {
+        var noAccession = DicomConversions.BuildWorklistItem(
+            new SurveyRecord { RecordId = "r2", RawJson = "{}", FirstName = "Ana" },
+            new MwlOptions());
+
+        Assert.False(WorklistMatcher.Matches(
+            Query((q, _) => q.Add(DicomTag.AccessionNumber, "TAB-1")), noAccession));
+    }
+
+    [Theory]
     [InlineData("Dela Cruz^Juan", true)]
     [InlineData("DELA*", true)]
     [InlineData("*juan*", true)]
