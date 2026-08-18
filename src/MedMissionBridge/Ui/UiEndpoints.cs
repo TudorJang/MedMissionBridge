@@ -62,7 +62,10 @@ public static class UiEndpoints
             mwlRunning = runtime.MwlRunning,
             mdnsRunning = runtime.MdnsRunning,
             mdnsAddresses = runtime.MdnsAddresses,
-            apiKeyIsDefault = string.IsNullOrWhiteSpace(options.ApiKey) || options.ApiKey == "changeme-dev-key",
+            // Safe to expose: this whole surface is loopback-only, and the operator
+            // needs to read the key to type it into the tablets.
+            apiKey = options.ApiKey,
+            apiKeySource = runtime.ApiKeySource.ToString(),
             dbPath = options.ResolveDbPath(),
             serviceName = options.Mdns.ResolveServiceName(),
         }));

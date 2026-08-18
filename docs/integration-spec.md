@@ -123,9 +123,11 @@ Every `/api/v1/*` request needs a shared secret:
 
     X-Api-Key: <the site's key>
 
-Exact string match, no scheme prefix. Missing or wrong key gives `401` with no body. The
-key is per-laptop, configured in `appsettings.json`, and is the same key the tablets use.
-Ask the site operator for it; do not hardcode one.
+Exact string match, no scheme prefix. Missing or wrong key gives `401` with no body. It
+is the same key the tablets use, and it is **per-laptop**: unless the site set one in
+`appsettings.json`, each bridge generates its own on first start, in the form
+`XXXXX-XXXXX-XXXXX-XXXXX`. Read it from the site operator or from the laptop's own
+management page. Never hardcode a key, and expect it to differ between laptops.
 
 Transport is plain HTTP. The deployment premise is an isolated field network with no
 route to the internet — see [Open items](#12-open-items).

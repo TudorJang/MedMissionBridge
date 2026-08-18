@@ -14,4 +14,9 @@ public sealed class BridgeRuntimeState
     /// <summary>Addresses tablets are told to connect to. Surfaced in health so an
     /// operator can spot a virtual-adapter address before the field does.</summary>
     public IReadOnlyList<string> MdnsAddresses { get; set; } = [];
+
+    /// <summary>Whether the running key came from appsettings.json or was generated
+    /// on first start. Health reports it so the operator knows which key the tablets
+    /// need and where it came from.</summary>
+    public ApiKeySource ApiKeySource { get; set; } = ApiKeySource.Configured;
 }

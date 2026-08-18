@@ -4,6 +4,11 @@ header { display: flex; align-items: baseline; gap: 16px; padding: 12px 20px; ba
 header h1 { margin: 0; font-size: 1.2rem; }
 .health { font-size: 0.8rem; opacity: 0.85; }
 main { padding: 16px 20px; }
+.apikey { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+  padding: 8px 12px; background: #fff; border: 1px solid #e2e5e0; font-size: 0.9rem; }
+.apikey-label { color: #5a6c6a; }
+.apikey code { font-size: 1rem; letter-spacing: 0.06em; background: #eef4f3; padding: 3px 8px; }
+.apikey button { padding: 4px 10px; cursor: pointer; }
 .controls { display: flex; gap: 8px; margin-bottom: 12px; }
 .controls input[type=search] { flex: 1; max-width: 360px; padding: 6px 10px; }
 .split { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; }

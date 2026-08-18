@@ -28,8 +28,14 @@ async function loadHealth() {
   let line = `HTTP :${h.httpPort} · MWL :${h.mwlPort} (${h.mwlAeTitle}) · mDNS ${h.serviceName} · ${h.dbPath}`;
   if (!h.mwlRunning) line += " ⚠ MWL not running";
   if (!h.mdnsRunning) line += " ⚠ mDNS not running";
-  if (h.apiKeyIsDefault) line += " ⚠ default API key";
   document.getElementById("health").textContent = line;
+
+  // The operator types this into every tablet, so it is shown rather than hidden —
+  // this page is reachable from the laptop itself only.
+  document.getElementById("apiKeyValue").textContent = h.apiKey;
+  document.getElementById("apiKeyNote").textContent = h.apiKeySource === "Generated"
+    ? "generated for this laptop on first run — enter it on every tablet"
+    : "set in appsettings.json";
 }
 
 async function loadList() {
@@ -113,6 +119,21 @@ async function showDetail(recordId) {
     box.appendChild(table);
   }
 }
+
+document.getElementById("copyKey").addEventListener("click", async () => {
+  const button = document.getElementById("copyKey");
+  const key = document.getElementById("apiKeyValue").textContent;
+  // 127.0.0.1 counts as a secure context, so the clipboard API is available; a
+  // failure still has to be visible, because a silently empty paste on the tablet
+  // is worse than no button at all.
+  try {
+    await navigator.clipboard.writeText(key);
+    button.textContent = "Copied";
+  } catch {
+    button.textContent = "Copy failed — select it";
+  }
+  setTimeout(() => { button.textContent = "Copy"; }, 2000);
+});
 
 document.getElementById("refresh").addEventListener("click", loadList);
 document.getElementById("search").addEventListener("input", () => loadList());

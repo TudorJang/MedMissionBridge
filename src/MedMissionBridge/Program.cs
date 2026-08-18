@@ -9,6 +9,12 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 var bridge = builder.Configuration.GetSection("Bridge").Get<BridgeOptions>() ?? new BridgeOptions();
+
+// A site that never edited appsettings.json would otherwise run on the published
+// placeholder key, which every copy of the bridge shares. Resolve to a generated,
+// site-unique key instead; the operator reads it off the management page.
+var apiKey = ApiKeyBootstrap.Resolve(bridge.ApiKey, bridge.ResolveDataDir);
+bridge.ApiKey = apiKey.Key;
 builder.Services.AddSingleton(bridge);
 
 var isTesting = builder.Environment.IsEnvironment("Testing");
@@ -23,18 +29,20 @@ if (!isTesting)
     builder.Host.UseSerilog();
     builder.WebHost.UseUrls($"http://0.0.0.0:{bridge.HttpPort}");
 
-    if (bridge.ApiKey == "changeme-dev-key" || string.IsNullOrWhiteSpace(bridge.ApiKey))
+    if (apiKey.Source == ApiKeySource.Generated)
     {
-        Log.Warning(
-            "Bridge:ApiKey is left at its default/blank value — tablet ingest on the LAN " +
-            "is effectively unauthenticated. Set a real value in appsettings.json before deploying.");
+        Log.Information(
+            "Bridge:ApiKey was left at its placeholder value, so this laptop is using its own " +
+            "generated key, kept in {KeyFile}. Read it from the management page at " +
+            "http://127.0.0.1:{Port}/ and enter it on each tablet.",
+            Path.Combine(bridge.ResolveDataDir(), ApiKeyBootstrap.FileName), bridge.HttpPort);
     }
 }
 
 builder.Services.AddDbContextFactory<BridgeDbContext>(o =>
     o.UseSqlite($"Data Source={bridge.ResolveDbPath()}"));
 builder.Services.AddSingleton<SurveyStore>();
-var runtimeState = new BridgeRuntimeState();
+var runtimeState = new BridgeRuntimeState { ApiKeySource = apiKey.Source };
 builder.Services.AddSingleton(runtimeState);
 
 var app = builder.Build();

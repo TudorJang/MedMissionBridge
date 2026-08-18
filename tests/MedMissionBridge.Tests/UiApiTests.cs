@@ -83,8 +83,10 @@ public class UiApiTests
         // environment (see Program.cs [ANCHOR:SERVERS]) — false is honest here.
         Assert.False(health.GetProperty("mwlRunning").GetBoolean());
         Assert.False(health.GetProperty("mdnsRunning").GetBoolean());
-        // BridgeAppFactory configures a non-default test key.
-        Assert.False(health.GetProperty("apiKeyIsDefault").GetBoolean());
+        // BridgeAppFactory configures a real key, so nothing is generated and the
+        // operator can read back exactly what the tablets must send.
+        Assert.Equal(BridgeAppFactory.ApiKey, health.GetProperty("apiKey").GetString());
+        Assert.Equal("Configured", health.GetProperty("apiKeySource").GetString());
     }
 
     [Fact]

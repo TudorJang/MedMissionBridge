@@ -21,6 +21,18 @@ Configuration: `src/MedMissionBridge/appsettings.json`, section `Bridge`
 (API key, ports, AE title, modality, DB path, mDNS name). Data and logs:
 `%ProgramData%\MedMissionBridge\`.
 
+### The API key
+
+Leaving `Bridge:ApiKey` at its shipped `changeme-dev-key` placeholder no longer
+means running unauthenticated. On first start the bridge generates a key unique to
+that laptop, stores it in `%ProgramData%\MedMissionBridge\api-key.txt`, and reuses
+it on every later start — tablets configured once keep working across reboots. The
+management page shows the running key with a copy button; type it into each tablet.
+
+Setting a real value in `appsettings.json` still wins and skips generation entirely,
+which is what you want when one key has to cover several laptops. To rotate a
+generated key, delete `api-key.txt` and restart — every tablet then needs the new one.
+
 ## Contracts
 
 - Payload and semantics: tablet repo `docs/reference/wire-contract.md`.
@@ -33,8 +45,8 @@ Configuration: `src/MedMissionBridge/appsettings.json`, section `Bridge`
 
 Produces `publish/` (~106 MB): `MedMissionBridge.exe` plus `appsettings.json`
 and `wwwroot/` — copy the whole folder to the field laptop and run the exe;
-no .NET installation is required there. Edit `appsettings.json` (API key!)
-before the first run. Data and logs land in `%ProgramData%\MedMissionBridge\`.
+no .NET installation is required there. Set the ports in `appsettings.json` if the
+site needs non-default ones; the API key takes care of itself (see above). Data and logs land in `%ProgramData%\MedMissionBridge\`.
 
 ### Check these two on each field laptop
 
