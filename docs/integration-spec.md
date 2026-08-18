@@ -145,20 +145,33 @@ screen is what was answered.
 
 **Layer 3 — the payload itself, byte for byte**, in a private block:
 
+Under the private creator MDVizio-X already uses for its own AI results,
+`MDAI_PRIVATE_CREATOR` in group `1001`, so a study carries one private block rather than
+two and your existing reader finds these the same way it finds `(1001,1011)` and
+`(1001,1012)`. Elements `01`–`20` in that block are yours; ours start at `30`.
+
 | Element | VR | Content |
 |---|---|---|
-| `(7777,0010)` | LO | Private Creator — the string `MEDMISSION SURVEY` |
-| `(7777,xx01)` | UT | The survey JSON exactly as the tablet sent it |
-| `(7777,xx02)` | LO | `medmission-survey/1` — names the payload format |
+| `(1001,xx30)` | LO | `medmission-survey/1` — names the payload format |
+| `(1001,xx31)` | UT | The survey JSON exactly as the tablet sent it |
+| `(1001,xx40)` | SQ | One item per answered field |
+| ↳ `(1001,xx41)` | LO | Field name, dotted path — `patient.firstName`, `tbInfo.closeContactActiveTB` |
+| ↳ `(1001,xx42)` | LO | Value. Lists are comma-joined; booleans are `true`/`false`; over 64 characters it is clipped, and the JSON above has it whole |
 
-`xx` is whatever block the private creator lands in, per PS3.5 §7.8.1: find the group
-`7777` element whose value is `MEDMISSION SURVEY`, take its low byte, and the data
-elements are at `(7777,<that byte><01|02>)`. Do not hardcode the block — reading the
-creator is what stops another vendor's group `7777` from being parsed as ours.
+`xx` is the block the private creator landed in, per PS3.5 §7.8.1: find the group `1001`
+element whose value is `MDAI_PRIVATE_CREATOR`, take its low byte, and the data elements
+are at `(1001,<that byte><30|31|40|41|42>)`. Do not hardcode the block.
 
-The value is UTF-8 JSON. A reader that has never heard of the private creator sees the
-element as unknown bytes, which is harmless and expected — the bytes are still the whole
-survey. Section 9 documents the JSON.
+Unanswered fields are absent from the sequence rather than present and empty, so its
+length is how many questions the patient actually answered.
+
+The JSON value is UTF-8. A reader that has never heard of the private creator sees the
+element as unknown bytes, which is harmless — the bytes are still the whole survey.
+Section 9 documents the JSON.
+
+**Element numbers `30`, `31` and `40`–`42` need to stay reserved for this.** They were
+chosen to clear everything the field studies use; confirm the allocation so a later
+MDVizio-X release does not claim them.
 
 ### The description fields carry a survey summary
 
@@ -430,11 +443,13 @@ the ones that decide the shape of the integration.
    AI step without anyone fetching anything. Standard behaviour says it should for the
    patient and study attributes; the private block is the one to check. One exposure
    settles it — worth doing together at the first test.
-3. **Modality — `CR` or `DX`?** The bridge sends `CR` by default and the console filters
-   on both. If the detector reports DX, say so and we will change the setting.
-4. **Character set.** The bridge always declares `ISO_IR 192` (UTF-8). The console has a
-   character-set setting of its own; if it is left on a Latin-1 default, non-ASCII names
-   will not survive the trip. Worth checking once with a real name.
+3. **Modality — now `DX`.** The field studies are all `DX`, so that is the default. A
+   site whose detector reports `CR` changes one setting.
+4. **Character set — the one real interoperability risk.** The bridge declares
+   `ISO_IR 192` (UTF-8). The field studies are written as `ISO 2022 IR 149`, the Korean
+   set, which has no room for the Latin letters Philippine names actually use: a patient
+   named Peña or Muñoz is the test case, not a Korean name. Worth one exposure with such
+   a name before a site opens.
 5. **AE title enforcement.** Any calling AE is accepted today, logged but not checked.
    Say the word and we will restrict it to the console's AE.
 6. **Where do the images live?** The console stores locally and can send to PACS or a USB

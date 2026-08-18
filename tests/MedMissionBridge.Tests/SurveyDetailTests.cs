@@ -44,13 +44,51 @@ public class SurveyDetailTests
     }
 
     [Fact]
-    public void the_private_block_is_claimed_so_another_vendor_cannot_be_misread()
+    public void the_block_is_claimed_under_the_creator_the_console_already_uses()
     {
         var ds = Item(FullSurvey);
 
-        var creators = ds.Where(e => e.Tag.Group == 0x7777 && e.Tag.Element == 0x0010)
+        var creators = ds.Where(e => e.Tag.Group == 0x1001 && e.Tag.Element == 0x0010)
             .Select(e => ds.GetSingleValue<string>(e.Tag)).ToList();
         Assert.Contains(SurveyDetail.PrivateCreator, creators);
+    }
+
+    [Fact]
+    public void every_answered_field_appears_as_a_name_value_item()
+    {
+        // Shaped like the AI result sequence the console already writes next to it, so
+        // the same reading code works on both.
+        var ds = Item(FullSurvey);
+        var items = ds.GetSequence(SurveyDetail.SurveyItems).Items
+            .ToDictionary(i => i.GetSingleValue<string>(SurveyDetail.SurveyItemName),
+                          i => i.GetSingleValue<string>(SurveyDetail.SurveyItemValue));
+
+        Assert.Equal("Juan", items["patient.firstName"]);
+        Assert.Equal("42", items["patient.age"]);
+        Assert.Equal("61.5", items["vitalSigns.weight"]);
+        Assert.Equal("COUGH_2WEEKS_PLUS, NIGHT_SWEATS", items["symptoms"]);
+        Assert.Equal("YES", items["tbInfo.closeContactActiveTB"]);
+        Assert.Equal("true", items["environmentalExposure.cooksWithSolidFuels"]);
+        Assert.Equal("false", items["environmentalExposure.secondhandSmokeExposure"]);
+        Assert.Equal("HYPERTENSION, DIABETES", items["medicalHistory.items"]);
+    }
+
+    [Fact]
+    public void unanswered_fields_are_absent_from_the_sequence()
+    {
+        var ds = Item("""{"recordId":"r1","patient":{"firstName":"Ana"},"symptoms":[]}""");
+        var names = ds.GetSequence(SurveyDetail.SurveyItems).Items
+            .Select(i => i.GetSingleValue<string>(SurveyDetail.SurveyItemName)).ToList();
+
+        Assert.Equal(["recordId", "patient.firstName"], names);
+    }
+
+    [Fact]
+    public void a_survey_with_no_answers_adds_no_sequence()
+    {
+        var ds = Item("""{"patient":{},"symptoms":[]}""");
+
+        Assert.False(ds.Contains(SurveyDetail.SurveyItems));
     }
 
     [Fact]

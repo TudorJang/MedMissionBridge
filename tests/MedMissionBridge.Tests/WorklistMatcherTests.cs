@@ -65,8 +65,8 @@ public class WorklistMatcherTests
             Query((q, _) => q.Add(DicomTag.PatientName, pattern)), Item()));
 
     [Theory]
-    [InlineData("CR", true)]
-    [InlineData("DX", false)]
+    [InlineData("DX", true)]
+    [InlineData("CR", false)]
     public void modality_exact(string modality, bool expected) =>
         Assert.Equal(expected, WorklistMatcher.Matches(
             Query((_, sps) => sps.Add(DicomTag.Modality, modality)), Item()));

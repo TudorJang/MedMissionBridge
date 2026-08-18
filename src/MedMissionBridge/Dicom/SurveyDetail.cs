@@ -19,19 +19,33 @@ namespace MedMissionBridge.Dicom;
 /// </summary>
 public static class SurveyDetail
 {
-    /// <summary>Identifies our private block, so the tags below cannot collide with a
-    /// vendor that happens to use the same group.</summary>
-    public const string PrivateCreator = "MEDMISSION SURVEY";
+    /// <summary>
+    /// The private creator MDVizio-X already writes its own AI results under, taken from
+    /// the field studies. Reusing it keeps one block per study instead of two, and the
+    /// imaging software's existing reader finds these elements the same way it finds its
+    /// own. Elements 0x01–0x20 in this block are theirs; ours start at 0x30.
+    /// </summary>
+    public const string PrivateCreator = "MDAI_PRIVATE_CREATOR";
 
-    private const ushort PrivateGroup = 0x7777;
-
-    /// <summary>The payload exactly as the tablet sent it. UT, so length is never a limit.</summary>
-    public static DicomTag SurveyJson { get; } = new(PrivateGroup, 0x01, PrivateCreator);
+    private const ushort PrivateGroup = 0x1001;
 
     /// <summary>Names the payload format, so a reader knows what it is holding.</summary>
-    public static DicomTag SurveySchema { get; } = new(PrivateGroup, 0x02, PrivateCreator);
+    public static DicomTag SurveySchema { get; } = new(PrivateGroup, 0x30, PrivateCreator);
+
+    /// <summary>The payload exactly as the tablet sent it. UT, so length is never a limit.</summary>
+    public static DicomTag SurveyJson { get; } = new(PrivateGroup, 0x31, PrivateCreator);
+
+    /// <summary>One item per answered field, shaped like the AI result sequence next to
+    /// it so the same parsing code reads both.</summary>
+    public static DicomTag SurveyItems { get; } = new(PrivateGroup, 0x40, PrivateCreator);
+
+    public static DicomTag SurveyItemName { get; } = new(PrivateGroup, 0x41, PrivateCreator);
+    public static DicomTag SurveyItemValue { get; } = new(PrivateGroup, 0x42, PrivateCreator);
 
     public const string SchemaName = "medmission-survey/1";
+
+    /// <summary>LO is capped at 64 characters; the untruncated answer is in the JSON.</summary>
+    private const int ItemValueLimit = 64;
 
     /// <summary>Additional Patient History is LT — 10240 characters, far more than a survey needs.</summary>
     private const int HistoryLimit = 10240;
@@ -60,6 +74,16 @@ public static class SurveyDetail
         // recover every answer from here.
         ds.Add(DicomVR.LO, SurveySchema, SchemaName);
         ds.Add(DicomVR.UT, SurveyJson, record.RawJson);
+
+        var items = ToItems(record.RawJson);
+        if (items.Count > 0)
+            ds.Add(new DicomSequence(SurveyItems, items.Select(pair =>
+            {
+                var item = new DicomDataset();
+                item.Add(DicomVR.LO, SurveyItemName, pair.Name);
+                item.Add(DicomVR.LO, SurveyItemValue, Clip(pair.Value, ItemValueLimit));
+                return item;
+            }).ToArray()));
     }
 
     /// <summary>The survey as lines a person can read. Sections with no answers are left
@@ -130,6 +154,61 @@ public static class SurveyDetail
                 Str(patient, "zip")));
 
             return string.Join("\n", lines);
+        }
+    }
+
+    public readonly record struct Item(string Name, string Value);
+
+    /// <summary>
+    /// Every answered field as a name/value pair, dotted path for the name. Unanswered
+    /// fields are absent rather than empty, so the sequence length is how many questions
+    /// the patient actually answered.
+    /// </summary>
+    public static List<Item> ToItems(string rawJson)
+    {
+        var items = new List<Item>();
+        JsonDocument doc;
+        try { doc = JsonDocument.Parse(rawJson); }
+        catch (JsonException) { return items; }
+
+        using (doc)
+        {
+            if (doc.RootElement.ValueKind == JsonValueKind.Object) Walk(doc.RootElement, "", items);
+        }
+        return items;
+    }
+
+    private static void Walk(JsonElement element, string prefix, List<Item> items)
+    {
+        foreach (var property in element.EnumerateObject())
+        {
+            var name = prefix.Length == 0 ? property.Name : $"{prefix}.{property.Name}";
+            switch (property.Value.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    Walk(property.Value, name, items);
+                    break;
+                case JsonValueKind.Array:
+                    var values = property.Value.EnumerateArray()
+                        .Where(e => e.ValueKind == JsonValueKind.String)
+                        .Select(e => e.GetString()!)
+                        .ToList();
+                    if (values.Count > 0) items.Add(new Item(name, string.Join(", ", values)));
+                    break;
+                case JsonValueKind.String:
+                    if (property.Value.GetString() is { Length: > 0 } text)
+                        items.Add(new Item(name, text));
+                    break;
+                case JsonValueKind.Number:
+                    items.Add(new Item(name, property.Value.TryGetDouble(out var d)
+                        ? d.ToString("0.###", CultureInfo.InvariantCulture)
+                        : property.Value.GetRawText()));
+                    break;
+                case JsonValueKind.True:
+                case JsonValueKind.False:
+                    items.Add(new Item(name, property.Value.ValueKind == JsonValueKind.True ? "true" : "false"));
+                    break;
+            }
         }
     }
 

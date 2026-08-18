@@ -102,7 +102,7 @@ public class DicomConversionsTests
 
         var sps = ds.GetSequence(DicomTag.ScheduledProcedureStepSequence).Items.Single();
         Assert.Equal("20260814", sps.GetSingleValue<string>(DicomTag.ScheduledProcedureStepStartDate));
-        Assert.Equal("CR", sps.GetSingleValue<string>(DicomTag.Modality));
+        Assert.Equal("DX", sps.GetSingleValue<string>(DicomTag.Modality));
         Assert.Equal("MEDMISSION", sps.GetSingleValue<string>(DicomTag.ScheduledStationAETitle));
         Assert.Equal("TB Screening Chest X-Ray", sps.GetSingleValue<string>(DicomTag.ScheduledProcedureStepDescription));
     }

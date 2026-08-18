@@ -37,7 +37,9 @@ public class MwlOptions
     /// DICOM port off the LAN when only co-located software queries MWL.</summary>
     public string ListenAddress { get; set; } = "0.0.0.0";
     public string AeTitle { get; set; } = "MEDMISSION";
-    public string Modality { get; set; } = "CR";
+    /// <summary>DX, taken from the field studies the console actually produced. A site
+    /// whose detector reports CR sets it back here.</summary>
+    public string Modality { get; set; } = "DX";
     public string StationAeTitle { get; set; } = "MEDMISSION";
     public string ProcedureDescription { get; set; } = "TB Screening Chest X-Ray";
 

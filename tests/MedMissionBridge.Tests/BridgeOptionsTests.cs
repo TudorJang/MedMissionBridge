@@ -12,7 +12,7 @@ public class BridgeOptionsTests
         Assert.Equal(18080, o.HttpPort);
         Assert.Equal(11112, o.Mwl.Port);
         Assert.Equal("MEDMISSION", o.Mwl.AeTitle);
-        Assert.Equal("CR", o.Mwl.Modality);
+        Assert.Equal("DX", o.Mwl.Modality);
     }
 
     [Fact]
