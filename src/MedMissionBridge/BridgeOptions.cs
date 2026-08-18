@@ -23,6 +23,11 @@ public class BridgeOptions
 
     public string ResolveDbPath() =>
         string.IsNullOrWhiteSpace(DbPath) ? Path.Combine(ResolveDataDir(), "bridge.db") : DbPath;
+
+    /// <summary>Beside the database, so a site running from a custom DbPath keeps its
+    /// backups with the data they came from rather than in the default data directory.</summary>
+    public string ResolveBackupDir() =>
+        Path.Combine(Path.GetDirectoryName(ResolveDbPath()) ?? ResolveDataDir(), "backups");
 }
 
 public class MwlOptions

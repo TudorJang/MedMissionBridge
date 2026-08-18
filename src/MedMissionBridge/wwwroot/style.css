@@ -9,6 +9,7 @@ main { padding: 16px 20px; }
 .apikey-label { color: #5a6c6a; }
 .apikey code { font-size: 1rem; letter-spacing: 0.06em; background: #eef4f3; padding: 3px 8px; }
 .apikey button { padding: 4px 10px; cursor: pointer; }
+.apikey-spacer { flex: 1; }
 .diagnostics { list-style: none; margin: 0 0 12px; padding: 0; }
 .diag { padding: 8px 12px; margin-bottom: 6px; font-size: 0.85rem; border-left: 4px solid; }
 .diag.warn { background: #fdf3e7; border-color: #c4741a; color: #6b3d05; }

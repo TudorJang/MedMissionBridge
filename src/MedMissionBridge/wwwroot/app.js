@@ -147,6 +147,21 @@ document.getElementById("copyKey").addEventListener("click", async () => {
   setTimeout(() => { button.textContent = "Copy"; }, 2000);
 });
 
+document.getElementById("backup").addEventListener("click", async () => {
+  const button = document.getElementById("backup");
+  const note = document.getElementById("backupNote");
+  button.disabled = true;
+  note.textContent = "working…";
+  try {
+    const result = await fetchJson("/api/ui/backup", { method: "POST" });
+    // Show the path: the operator has to find this file to copy it to a USB drive.
+    note.textContent = `saved to ${result.path}`;
+  } catch {
+    note.textContent = "backup failed — check the log window";
+  }
+  button.disabled = false;
+});
+
 document.getElementById("refresh").addEventListener("click", loadList);
 document.getElementById("search").addEventListener("input", () => loadList());
 document.getElementById("statusFilter").addEventListener("change", loadList);

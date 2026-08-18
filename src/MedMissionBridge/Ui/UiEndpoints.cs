@@ -1,5 +1,6 @@
 using MedMissionBridge.Data;
 using MedMissionBridge.Deployment;
+using Microsoft.Extensions.Logging;
 
 namespace MedMissionBridge.Ui;
 
@@ -51,6 +52,27 @@ public static class UiEndpoints
                 StatusChangeResult.NotFound => Results.NotFound(),
                 _ => Results.Conflict(),
             };
+        });
+
+        app.MapPost("/api/ui/backup", (BridgeOptions options, ILogger<Program> logger) =>
+        {
+            // Everything the site collected lives only on this laptop; the operator
+            // presses this before carrying a copy off on a USB drive.
+            try
+            {
+                var dir = options.ResolveBackupDir();
+                var path = BackupService.Create(options.ResolveDbPath(), dir, DateTime.Now);
+                BackupService.Prune(dir);
+                logger.LogInformation("Database backup written to {BackupPath}", path);
+                return Results.Ok(new { path });
+            }
+            catch (Exception ex)
+            {
+                // A failed backup that looks like a success is how a site ends up with
+                // no copy at all, so say so on the page.
+                logger.LogError(ex, "Database backup failed");
+                return Results.Problem("Backup failed — see the log window for details.");
+            }
         });
 
         app.MapGet("/api/ui/health", (BridgeOptions options, BridgeRuntimeState runtime) => Results.Ok(new

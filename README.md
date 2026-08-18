@@ -19,7 +19,17 @@ co-located medical software.
 
 Configuration: `src/MedMissionBridge/appsettings.json`, section `Bridge`
 (API key, ports, AE title, modality, DB path, mDNS name). Data and logs:
-`%ProgramData%\MedMissionBridge\`.
+`%ProgramData%\MedMissionBridge\` — the database, `logs\` (daily rolling, 30 kept),
+and `backups\` (snapshots taken from the management page, 14 kept).
+
+### Backups
+
+The management page has a **Back up database** button: it runs `VACUUM INTO` and writes a
+consistent snapshot to `backups\`, which the operator then copies to external media. The
+site's data exists only on that laptop, and file-copying a live SQLite database can yield
+an unreadable copy, so this is the supported way to get one. Snapshots are named by
+timestamp, the newest 14 are kept, and files the operator put in that folder are never
+touched.
 
 ### The API key
 

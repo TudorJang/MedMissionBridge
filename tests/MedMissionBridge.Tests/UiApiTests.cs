@@ -90,6 +90,23 @@ public class UiApiTests
     }
 
     [Fact]
+    public async Task backup_writes_a_snapshot_beside_the_database()
+    {
+        using var app = new BridgeAppFactory();
+        var client = app.CreateClient();
+        await Seed(client);
+
+        var response = await client.PostAsync("/api/ui/backup", content: null);
+
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var path = body.GetProperty("path").GetString()!;
+        // The operator is told this path on the page and has to find the file there.
+        Assert.True(File.Exists(path), $"no backup at {path}");
+        try { Directory.Delete(Path.GetDirectoryName(path)!, recursive: true); } catch (IOException) { }
+    }
+
+    [Fact]
     public async Task root_serves_the_management_page()
     {
         using var app = new BridgeAppFactory();

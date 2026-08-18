@@ -70,13 +70,22 @@ Repeat for every tablet. After this, staff just fill surveys and send.
 | Laptop page will not load | The black window was closed. Run `MedMissionBridge.exe` again. |
 | A laptop appears twice in the tablet's list | Use the one that has the API key filled in. Newer app versions prevent this. |
 
-## 6. End of day
+## 6. End of day — back up
 
-Nothing to shut down in a particular order — close the black window and turn the laptop off.
+Everything the site collected today is on this laptop and nowhere else. A lost or broken
+laptop is lost patient data. Before you shut down:
 
-All data lives on the laptop in `C:\ProgramData\MedMissionBridge\`. **Copy that whole
-folder to a USB drive at the end of each day.** It holds every survey collected; nothing
-is stored anywhere else, and a lost laptop is lost data.
+1. On the laptop page, press **Back up database**. It writes a file and shows you where.
+2. Copy that file to a USB drive. The folder is
+   `C:\ProgramData\MedMissionBridge\backups\` and the file is named by the date and
+   time, newest last.
+
+Do not copy the database while the bridge is running instead — a copy taken mid-write can
+be unreadable. The button exists so you get a copy that is guaranteed to open. The laptop
+keeps the last 14 backups and deletes older ones; anything you put in that folder yourself
+is left alone.
+
+Then close the black window and turn the laptop off. No particular order is needed.
 
 ---
 
