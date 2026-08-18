@@ -25,6 +25,7 @@ Configuration: `src/MedMissionBridge/appsettings.json`, section `Bridge`
 
 - Payload and semantics: tablet repo `docs/reference/wire-contract.md`.
 - Design: `docs/superpowers/specs/2026-08-15-medmission-bridge-design.md`.
+- For the imaging-software team (MWL and REST, hand this one over): `docs/integration-spec.md`.
 
 ## Package for deployment
 
