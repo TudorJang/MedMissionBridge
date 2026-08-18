@@ -94,11 +94,14 @@ if (!isTesting)
     // Same for mDNS: a discovery failure must not take ingest down with it.
     try
     {
-        var advertiser = new MdnsAdvertiser(bridge.Mdns.ResolveServiceName(), bridge.HttpPort);
+        var addresses = bridge.Mdns.ResolveAdvertiseAddresses();
+        var advertiser = new MdnsAdvertiser(bridge.Mdns.ResolveServiceName(), bridge.HttpPort, addresses);
         app.Lifetime.ApplicationStopping.Register(advertiser.Dispose);
         runtimeState.MdnsRunning = true;
-        Log.Information("mDNS advertising {Name} on _medmission._tcp:{Port}",
-            bridge.Mdns.ResolveServiceName(), bridge.HttpPort);
+        runtimeState.MdnsAddresses = addresses.Select(a => a.ToString()).ToList();
+        Log.Information("mDNS advertising {Name} on _medmission._tcp:{Port} at {Addresses}",
+            bridge.Mdns.ResolveServiceName(), bridge.HttpPort,
+            addresses.Count > 0 ? string.Join(", ", addresses) : "every local address");
     }
     catch (Exception ex)
     {

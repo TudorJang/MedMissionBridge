@@ -1,3 +1,6 @@
+using System.Net;
+using MedMissionBridge.Mdns;
+
 namespace MedMissionBridge;
 
 public class BridgeOptions
@@ -38,6 +41,18 @@ public class MdnsOptions
 {
     /// <summary>Empty = machine name.</summary>
     public string ServiceName { get; set; } = "";
+
+    /// <summary>Empty = detect this laptop's LAN address automatically. Set it to the
+    /// address tablets must connect to when detection cannot tell the LAN NIC from a
+    /// virtual one (Hyper-V, VirtualBox, VPN).</summary>
+    public string AdvertiseAddress { get; set; } = "";
+
     public string ResolveServiceName() =>
         string.IsNullOrWhiteSpace(ServiceName) ? Environment.MachineName : ServiceName;
+
+    /// <summary>Empty when nothing qualifies — the advertiser then falls back to the library default.</summary>
+    public IReadOnlyList<IPAddress> ResolveAdvertiseAddresses() =>
+        IPAddress.TryParse(AdvertiseAddress, out var pinned)
+            ? [pinned]
+            : LanAddressSelector.FromSystem();
 }

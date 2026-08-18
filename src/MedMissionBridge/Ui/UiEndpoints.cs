@@ -61,6 +61,7 @@ public static class UiEndpoints
             mwlAeTitleEnforced = false,
             mwlRunning = runtime.MwlRunning,
             mdnsRunning = runtime.MdnsRunning,
+            mdnsAddresses = runtime.MdnsAddresses,
             apiKeyIsDefault = string.IsNullOrWhiteSpace(options.ApiKey) || options.ApiKey == "changeme-dev-key",
             dbPath = options.ResolveDbPath(),
             serviceName = options.Mdns.ResolveServiceName(),

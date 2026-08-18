@@ -1,3 +1,4 @@
+using System.Net;
 using MedMissionBridge;
 
 namespace MedMissionBridge.Tests;
@@ -26,5 +27,20 @@ public class BridgeOptionsTests
     {
         var o = new BridgeOptions { DbPath = @"C:\tmp\x.db" };
         Assert.Equal(@"C:\tmp\x.db", o.ResolveDbPath());
+    }
+
+    [Fact]
+    public void pinned_advertise_address_wins_over_detection()
+    {
+        var o = new BridgeOptions { Mdns = { AdvertiseAddress = "192.168.8.54" } };
+        Assert.Equal(new[] { IPAddress.Parse("192.168.8.54") }, o.Mdns.ResolveAdvertiseAddresses());
+    }
+
+    [Fact]
+    public void unparseable_advertise_address_falls_back_to_detection()
+    {
+        // A typo in the field must not silence discovery outright.
+        var o = new BridgeOptions { Mdns = { AdvertiseAddress = "not-an-ip" } };
+        Assert.Equal(new BridgeOptions().Mdns.ResolveAdvertiseAddresses(), o.Mdns.ResolveAdvertiseAddresses());
     }
 }

@@ -10,4 +10,8 @@ public sealed class BridgeRuntimeState
 {
     public bool MwlRunning { get; set; }
     public bool MdnsRunning { get; set; }
+
+    /// <summary>Addresses tablets are told to connect to. Surfaced in health so an
+    /// operator can spot a virtual-adapter address before the field does.</summary>
+    public IReadOnlyList<string> MdnsAddresses { get; set; } = [];
 }

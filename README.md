@@ -35,6 +35,23 @@ and `wwwroot/` — copy the whole folder to the field laptop and run the exe;
 no .NET installation is required there. Edit `appsettings.json` (API key!)
 before the first run. Data and logs land in `%ProgramData%\MedMissionBridge\`.
 
+### Check these two on each field laptop
+
+Open `http://127.0.0.1:18080/` after the first run and read the health panel.
+
+- **`mwlRunning` false.** Windows reserves TCP ranges for Hyper-V and WinNAT, and
+  the default MWL port 11112 falls inside one on some machines — the DICOM server
+  then fails to bind with a socket access error while ingest keeps working. Run
+  `netsh int ipv4 show excludedportrange protocol=tcp`; if 11112 is listed, set
+  `Bridge.Mwl.Port` to a free port (12112 works) and tell the X-ray software the
+  new port.
+- **`mdnsAddresses` shows an address tablets cannot reach.** The bridge advertises
+  only NICs that look like the real LAN, but a laptop with an unusual VPN or
+  virtual adapter can still fool the detection. Whatever is listed here is exactly
+  what tablets are told to connect to, so if it is not this laptop's LAN address,
+  pin it with `Bridge.Mdns.AdvertiseAddress`. Tablets can always fall back to
+  entering the address by hand.
+
 ## Test
 
     dotnet test
