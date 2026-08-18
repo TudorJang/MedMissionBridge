@@ -92,5 +92,15 @@ Then close the black window and turn the laptop off. No particular order is need
 
 ---
 
+## 7. One thing to agree before the first patient
+
+The X-ray software can find a patient by their record number — `TAB-A3F2-0007` — which is
+much faster than scrolling a list of 150. But the tablet only shows that number on screen;
+it prints nothing. Decide how the patient carries it to the X-ray room: a slip written at
+registration is the usual answer. Without it the operator searches by name, which is slow
+and ambiguous when two people share a surname.
+
+---
+
 **Support:** note the record number (like `TAB-A3F2-0007`) and what the screen said. Both
 the laptop page and the tablet show enough to identify any single patient's record.

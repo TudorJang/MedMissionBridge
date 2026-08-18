@@ -74,9 +74,15 @@ carrying only unsupported keys returns every scheduled item.
 Empty or absent keys are treated as "match everything", per the DICOM matching rules.
 The usual console query — today's date plus modality — works unchanged.
 
-Accession is deliberately forgiving on case and accepts wildcards, because it is the
-number printed on the form in the patient's hand and gets typed at a console with a long
-list already on screen. A record with no accession never matches an accession query.
+Accession is deliberately forgiving on case and accepts wildcards, because it gets typed
+by hand at a console with a long list already on screen. A record with no accession never
+matches an accession query.
+
+**How the number reaches the console operator is a site decision, not a software one.**
+The tablet assigns it and shows it on the form, but prints nothing — so unless the site
+writes it on a slip for the patient to carry, the operator will be searching by name
+instead. Worth settling before a site opens; searching 150 names for a duplicate surname
+is the failure this key exists to avoid.
 
 ## 5. DICOM MWL — returned item
 
@@ -161,6 +167,12 @@ two and your existing reader finds these the same way it finds `(1001,1011)` and
 `xx` is the block the private creator landed in, per PS3.5 §7.8.1: find the group `1001`
 element whose value is `MDAI_PRIVATE_CREATOR`, take its low byte, and the data elements
 are at `(1001,<that byte><30|31|40|41|42>)`. Do not hardcode the block.
+
+**`docs/reading-the-survey.md` has working code for this**, along with the one thing that
+catches people out: a reader with no dictionary entry for these elements receives them as
+UN — unknown bytes — so the JSON has to be decoded as UTF-8 rather than read as a string,
+and the sequence stays opaque unless the tags are registered. Read the JSON element; it
+carries the same answers and needs nothing registered.
 
 Unanswered fields are absent from the sequence rather than present and empty, so its
 length is how many questions the patient actually answered.
@@ -400,7 +412,7 @@ throughout, and the worklist declares `ISO_IR 192` for the same reason.
 | Concept | DICOM | JSON | Notes |
 |---|---|---|---|
 | Patient identity | Patient ID `(0010,0020)` | `recordId` | UUID, unique, always present |
-| Study/visit number | Accession Number `(0008,0050)` | `no` | Human-readable, printed on the form, not guaranteed unique |
+| Study/visit number | Accession Number `(0008,0050)` | `no` | Human-readable, shown on the tablet, not guaranteed unique |
 
 The intended flow:
 

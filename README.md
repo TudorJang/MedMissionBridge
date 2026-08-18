@@ -49,7 +49,8 @@ generated key, delete `api-key.txt` and restart — every tablet then needs the 
 
 - Payload and semantics: tablet repo `docs/reference/wire-contract.md`.
 - Design: `docs/superpowers/specs/2026-08-15-medmission-bridge-design.md`.
-- For the imaging-software team (MWL and REST, hand this one over): `docs/integration-spec.md`.
+- For the imaging-software team (MWL and REST, hand this one over): `docs/integration-spec.md`,
+  with `docs/reading-the-survey.md` for the code that pulls the survey back out of a worklist item.
 - For the person running the laptop at a site (print it): `docs/field-operator-guide.md`.
 - What the field studies show about the console and its AI pipeline, and what that
   changed here: `docs/field-data-findings.md`.

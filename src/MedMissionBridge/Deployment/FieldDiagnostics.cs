@@ -72,6 +72,10 @@ public static class FieldDiagnostics
                 + "Confirm that is this laptop's address on the field network."));
         }
 
+        // The disk fills with images the console writes, not with anything of ours,
+        // but this page is the one an operator opens each morning.
+        if (DiskSpace.ForPath(options.ResolveDbPath()) is { } disk) found.Add(disk);
+
         return found;
     }
 }
