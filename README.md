@@ -38,6 +38,7 @@ generated key, delete `api-key.txt` and restart — every tablet then needs the 
 - Payload and semantics: tablet repo `docs/reference/wire-contract.md`.
 - Design: `docs/superpowers/specs/2026-08-15-medmission-bridge-design.md`.
 - For the imaging-software team (MWL and REST, hand this one over): `docs/integration-spec.md`.
+- For the person running the laptop at a site (print it): `docs/field-operator-guide.md`.
 
 ## Package for deployment
 
