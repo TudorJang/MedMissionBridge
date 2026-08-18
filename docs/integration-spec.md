@@ -110,6 +110,56 @@ The Study Instance UID is derived from the record id rather than stored, so repe
 queries for the same survey always return the same UID. It uses the `2.25` arc, which is
 reserved for UUID-derived identifiers, so no organisation root has to be registered.
 
+### The whole survey rides in the worklist item
+
+The console cannot call the REST API, and whatever the worklist carries is what the
+console copies into the acquired image and forwards to PACS. So the complete survey is in
+the worklist item, in three layers. Nothing is dropped at any layer; the private element
+is the one that is lossless.
+
+**Layer 1 — standard attributes**, so an ordinary DICOM reader gets them for free:
+
+| Attribute | Tag | Source | Note |
+|---|---|---|---|
+| Patient's Telephone Numbers | `(0010,2154)` | `patient.cellPhone` | |
+| Patient's Size | `(0010,1020)` | `vitalSigns.height` | **metres** — the survey is in cm |
+| Patient's Weight | `(0010,1030)` | `vitalSigns.weight` | kg |
+| Smoking Status | `(0010,21A0)` | `smoking.status` | `CURRENT`→`YES`, `NEVER`→`NO`. A former smoker is **omitted**: the attribute asks whether the patient smokes now, and neither value is true of them |
+
+**Layer 2 — Additional Patient History `(0010,21B0)`**, the survey rendered as lines for
+anything that displays free text. LT, so 10240 characters — a survey uses a few hundred:
+
+    Patient: TAB-A3F2-0007, age 42, MALE, MARRIED
+    Vitals: Ht 168cm, Wt 61.5kg, BP 130/85 mmHg, HR 78bpm, RR 18/min, Temp 36.8C, SpO2 98%
+    History: HYPERTENSION, DIABETES, other Migraine, meds Metformin 500mg
+    Symptoms: COUGH_2WEEKS_PLUS, NIGHT_SWEATS
+    TB history: diagnosed NO, treated NO, contact YES, when 2025, household DONT_KNOW
+    Smoking: FORMER, FIVE_TO_10
+    Alcohol: yes, ONE_TO_TWO
+    Exposure: dust/smoke/chemical, solid fuels
+    Contact: 0917-000-0000, 12 Mabini St, Real, Calamba, Laguna, 4027
+
+A section with no answers is left out rather than printed empty, and a `false` is not
+printed at all — an exposure line lists only what the patient reported, so what is on
+screen is what was answered.
+
+**Layer 3 — the payload itself, byte for byte**, in a private block:
+
+| Element | VR | Content |
+|---|---|---|
+| `(7777,0010)` | LO | Private Creator — the string `MEDMISSION SURVEY` |
+| `(7777,xx01)` | UT | The survey JSON exactly as the tablet sent it |
+| `(7777,xx02)` | LO | `medmission-survey/1` — names the payload format |
+
+`xx` is whatever block the private creator lands in, per PS3.5 §7.8.1: find the group
+`7777` element whose value is `MEDMISSION SURVEY`, take its low byte, and the data
+elements are at `(7777,<that byte><01|02>)`. Do not hardcode the block — reading the
+creator is what stops another vendor's group `7777` from being parsed as ours.
+
+The value is UTF-8 JSON. A reader that has never heard of the private creator sees the
+element as unknown bytes, which is harmless and expected — the bytes are still the whole
+survey. Section 9 documents the JSON.
+
 ### The description fields carry a survey summary
 
 A console that reads the worklist and has no way to call the survey API would otherwise
@@ -374,12 +424,12 @@ the ones that decide the shape of the integration.
    Point it at the same host, port and AE title as the worklist (section 6) and the
    console closes its own studies. Nothing else is needed from your software; we would
    like to watch the first one go through together.
-2. **The survey API cannot be reached from MDVizio-X.** The console has no HTTP client,
-   so `GET /api/v1/surveys/…` is unusable from it as shipped. Two ways forward, and they
-   are not exclusive: the worklist description fields now carry a summary of the findings
-   that matter for a chest read (section 5), which needs nothing from your side; and for
-   the full survey, either MDVizio-X gains a small REST call or the operator reads it on
-   the bridge's own page. Tell us which of those fits your roadmap.
+2. **Does the console copy our attributes into the acquired image?** Every answer the
+   patient gave is now in the worklist item (section 5), so if the console carries those
+   attributes through to the image, the survey travels with the study to PACS and to the
+   AI step without anyone fetching anything. Standard behaviour says it should for the
+   patient and study attributes; the private block is the one to check. One exposure
+   settles it — worth doing together at the first test.
 3. **Modality — `CR` or `DX`?** The bridge sends `CR` by default and the console filters
    on both. If the detector reports DX, say so and we will change the setting.
 4. **Character set.** The bridge always declares `ISO_IR 192` (UTF-8). The console has a

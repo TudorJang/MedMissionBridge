@@ -101,6 +101,9 @@ public static class DicomConversions
         };
         AddIfPresent(sps, DicomTag.ScheduledProcedureStepID, procedureId);
         ds.Add(new DicomSequence(DicomTag.ScheduledProcedureStepSequence, sps));
+
+        // Everything the patient answered, in the only channel the console can read.
+        SurveyDetail.Apply(ds, r);
         return ds;
     }
 
