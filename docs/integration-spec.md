@@ -46,10 +46,13 @@ The `/api/v1/*` surface is the contract.
 |---|---|
 | Called AE Title | `MEDMISSION` (`Bridge:Mwl:AeTitle`) |
 | AE title enforcement | **None.** Any calling and called AE is accepted |
-| Accepted SOP classes | Verification (`1.2.840.10008.1.1`), Modality Worklist Information Model – FIND (`1.2.840.10008.5.1.4.31`) |
+| Accepted SOP classes | Verification (`1.2.840.10008.1.1`), Modality Worklist Information Model – FIND (`1.2.840.10008.5.1.4.31`), Modality Performed Procedure Step (`1.2.840.10008.3.1.2.3.3`) |
 | Transfer syntaxes | Explicit VR Little Endian, Implicit VR Little Endian |
 | Specific Character Set | `ISO_IR 192` (UTF-8) on every returned item |
 | Other SOP classes | Rejected with *abstract syntax not supported* |
+
+**Worklist and MPPS share one host, port and AE title.** Point both destinations in the
+console's network settings at the same place.
 
 C-ECHO is answered with `Success`, so you can verify connectivity before wiring the
 worklist. Every association request is logged with calling AE, called AE and remote host,
@@ -147,6 +150,30 @@ Two consequences worth designing around:
 If the worklist cannot be read from the database, the bridge answers the C-FIND with
 `ProcessingFailure` rather than an empty success, so an infrastructure fault is
 distinguishable from "no patients scheduled".
+
+### MPPS closes studies for you
+
+With the console's MPPS destination pointed at the bridge, nobody has to remember to
+clear the worklist:
+
+| Console sends | Performed Procedure Step Status | Record becomes |
+|---|---|---|
+| N-CREATE at exposure start | `IN PROGRESS` | `InProgress` |
+| N-SET at the end | `COMPLETED` | `Completed` |
+| N-SET on an abandoned exam | `DISCONTINUED` | `Cancelled` |
+
+The N-CREATE has to name the survey, by Patient ID or by the Study Instance UID the
+bridge supplied in the worklist — either identifies it. A step naming neither is answered
+with `No Such Object Instance` rather than `Success`, because acknowledging a step the
+bridge cannot track would leave the study open with nothing to show why. The N-SET then
+needs only the step's own SOP Instance UID; the bridge remembers the link.
+
+That link is held in memory. A bridge restarted between the start and the end of one
+exposure loses it, answers the N-SET with `No Such Object Instance`, and logs it; the
+operator closes that single study from the bridge page. Nothing else is affected.
+
+An unrecognised status changes nothing — guessing could close a study that was never
+shot — and a status the record cannot legally move to is logged and ignored.
 
 ## 7. REST — authentication
 
@@ -342,13 +369,11 @@ If the worklist is empty, check that at least one survey sits in `Received` or
 Written against MDVizio-X AI 1.0.0 as documented in its user manual. Items 1 and 2 are
 the ones that decide the shape of the integration.
 
-1. **MPPS — confirmed available, needs turning on.** The manual documents an MPPS
-   destination under Settings → Network alongside Worklist and PACS. Point it at the
-   bridge and the console announces acquisition start and end by itself: N-CREATE moves
-   the record to InProgress, N-SET to Completed, and the worklist empties itself with
-   nobody remembering to clear it. **The bridge does not implement the MPPS SCP yet** —
-   this is our work, not yours, and we need the console's client AE title and the port
-   you want us to listen on.
+1. **MPPS — implemented on our side, needs turning on in the console.** The manual
+   documents an MPPS destination under Settings → Network alongside Worklist and PACS.
+   Point it at the same host, port and AE title as the worklist (section 6) and the
+   console closes its own studies. Nothing else is needed from your software; we would
+   like to watch the first one go through together.
 2. **The survey API cannot be reached from MDVizio-X.** The console has no HTTP client,
    so `GET /api/v1/surveys/…` is unusable from it as shipped. Two ways forward, and they
    are not exclusive: the worklist description fields now carry a summary of the findings

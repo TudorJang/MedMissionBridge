@@ -84,6 +84,16 @@ if (!isTesting)
         return scheduled.Select(r => DicomConversions.BuildWorklistItem(r, bridge.Mwl)).ToList();
     };
 
+    // The console reports its own progress over MPPS, which is what keeps the worklist
+    // from filling up with studies nobody remembered to close.
+    MwlService.StatusSink = async (recordId, status) =>
+    {
+        var result = await store.TryChangeStatusAsync(recordId, status);
+        if (result != StatusChangeResult.Changed)
+            Log.Warning("MPPS reported {Status} for {RecordId} but the record is {Result}",
+                status, recordId, result);
+    };
+
     // Read before starting the SCP so a bind failure can name the range in the way.
     runtimeState.ExcludedTcpPorts = PortExclusions.FromSystem();
 
@@ -93,7 +103,9 @@ if (!isTesting)
         var mwlServer = new MwlServer(bridge.Mwl.ListenAddress, bridge.Mwl.Port);
         app.Lifetime.ApplicationStopping.Register(mwlServer.Dispose);
         runtimeState.MwlRunning = true;
-        Log.Information("MWL SCP listening on {Address}:{Port}, AE {Ae}",
+        Log.Information(
+            "MWL and MPPS SCP listening on {Address}:{Port}, AE {Ae} — point the console's "
+            + "worklist and MPPS destinations at the same host, port and AE title",
             bridge.Mwl.ListenAddress, bridge.Mwl.Port, bridge.Mwl.AeTitle);
     }
     catch (Exception ex)

@@ -11,7 +11,9 @@ co-located medical software.
 - Management UI: http://localhost:18080/ (loopback-only)
 - Tablet ingest: POST /api/v1/surveys with `X-Api-Key` (LAN)
 - Survey lookup: GET /api/v1/surveys/{recordId} or ?accession= (LAN, keyed)
-- MWL SCP: port 11112, AE `MEDMISSION` (C-ECHO supported). The AE title is
+- MWL + MPPS SCP: port 11112, AE `MEDMISSION` (C-ECHO supported). MPPS shares the
+  worklist's host, port and AE, and moves records to InProgress/Completed/Cancelled as
+  the console reports its own progress. The AE title is
   advertised, not enforced — the SCP accepts any calling/called AE. If only
   the co-located medical software queries MWL, set `Mwl:ListenAddress` to
   `127.0.0.1` to take the DICOM port off the LAN.

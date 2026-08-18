@@ -50,9 +50,12 @@ Repeat for every tablet. After this, staff just fill surveys and send.
 
 - Surveys arrive on the laptop page as **Received**. They are on the X-ray console's
   worklist from that moment.
-- When a patient is being x-rayed, set the record to **InProgress**; when the image is
-  taken, set it to **Completed**. **This is your job — nothing does it automatically.**
-  A record left as Received stays on the console's worklist all day.
+- If the X-ray software has been set up to report its progress to this laptop, records
+  move to **InProgress** and then **Completed** by themselves as each patient is shot.
+  Watch the list for the first few patients of the day to confirm it is happening.
+- If they are not moving on their own, set them yourself: **InProgress** when the patient
+  is being x-rayed, **Completed** when the image is taken. A record left as Received
+  stays on the X-ray software's list all day and the list becomes useless to work from.
 - **Cancelled** is for a patient who left or was entered twice.
 - Completed and Cancelled records disappear from the console's worklist but stay in the
   list on your page.

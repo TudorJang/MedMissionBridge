@@ -340,13 +340,13 @@
 
             <line x1="614" y1="168" x2="784" y2="168" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ahb)"></line>
             <text x="699" y="156" text-anchor="middle" font-size="11.5" fill="var(--warn)">MPPS 촬영 시작·완료</text>
-            <text x="699" y="184" text-anchor="middle" font-size="11" fill="var(--warn)" opacity=".75">브릿지 미구현 — 예정</text>
+            <text x="699" y="184" text-anchor="middle" font-size="11" fill="var(--warn)" opacity=".75">브릿지 구현 완료 — 설정만</text>
 
             <rect x="12" y="272" width="964" height="1" fill="currentColor" opacity=".25"></rect>
             <text x="24" y="300" font-size="12" fill="currentColor" opacity=".75">폐쇄망 · 인터넷 없음 · 서버 없음 · 데이터는 이 랩톱에만 존재</text>
             <text x="24" y="324" font-size="12" fill="currentColor" opacity=".75">랩톱이 꺼져 있어도 태블릿은 계속 작성. 복귀하면 밀린 문진을 스스로 전송</text>
           </svg>
-          <figcaption>브릿지는 먼저 연결하지 않음. 태블릿이 밀어 넣고, MDVizio-X가 가져감. 점선은 MDVizio-X가 보내오는 방향(미구현).</figcaption>
+          <figcaption>브릿지는 먼저 연결하지 않음. 태블릿이 밀어 넣고, MDVizio-X가 가져감. 점선은 MDVizio-X가 보내오는 방향.</figcaption>
         </figure>
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="card">
@@ -430,8 +430,8 @@
           <p>완료 처리가 밀리면 목록이 하루 종일 누적. 눈앞 환자를 긴 목록에서 찾아야 함.</p>
         </div>
         <div class="card brand">
-          <h3>해법 — MPPS (5쪽 1번)</h3>
-          <p>콘솔이 촬영 시작·완료를 브릿지에 알려주는 DICOM 표준. 상태가 자동으로 바뀌어 목록이 스스로 짧아짐. <b>랩톱 SW 수정 없음.</b></p>
+          <h3>해법 — MPPS · 구현 완료</h3>
+          <p>MDVizio-X가 촬영 시작·완료를 브릿지에 알려주면 상태가 자동 변경. 목록이 스스로 짧아짐. <b>설정에서 MPPS 주소만 지정하면 됨</b> — 워크리스트와 같은 포트·AE.</p>
         </div>
       </div>
     </div>
@@ -515,9 +515,9 @@
       <div class="ask">
         <div class="ask-row">
           <span class="ask-n">1</span>
-          <div class="ask-q">MPPS를 켤 것인가 — <b>지원 확인됨</b>
-            <span>매뉴얼에 설정 항목 존재. 켜면 촬영 시작·완료가 자동 반영돼 목록이 스스로 비워짐. 브릿지 SCP는 미구현 — 우리 작업. 필요한 것은 CLIENT AET과 포트</span></div>
-          <span class="ask-who">우리 구현</span>
+          <div class="ask-q">MPPS를 켤 것인가 — <b>양쪽 다 준비됨</b>
+            <span>설정 &gt; NETWORK &gt; MPPS에 워크리스트와 같은 주소·포트·AE 입력. 첫 환자에서 함께 확인하면 됨</span></div>
+          <span class="ask-who">오늘 설정</span>
         </div>
         <div class="ask-row">
           <span class="ask-n">2</span>
@@ -558,7 +558,8 @@
           <tr><td>문진 전송 · 워크리스트 조회 검증</td><td>브릿지 팀</td><td class="done">완료</td></tr>
           <tr><td>연동 규격 문서 · 운영자 가이드</td><td>브릿지 팀</td><td class="done">완료</td></tr>
           <tr><td>워크리스트 태그 보강 · 문진 요약 탑재</td><td>브릿지 팀</td><td class="done">완료</td></tr>
-          <tr><td>MPPS SCP 구현</td><td>브릿지 팀</td><td class="todo">미착수</td></tr>
+          <tr><td>MPPS SCP 구현</td><td>브릿지 팀</td><td class="done">완료</td></tr>
+          <tr><td>MPPS 설정 · 실기 확인</td><td>MDVizio-X</td><td class="todo">오늘</td></tr>
           <tr><td>워크리스트 실조회 검증</td><td>MDVizio-X</td><td class="todo">미착수</td></tr>
           <tr><td>위 결정 항목 6건 회신</td><td>MDVizio-X</td><td class="todo">오늘 논의</td></tr>
           <tr><td>실물 태블릿 확보 · 랩톱별 포트 확인 · 운영자 교육</td><td>현장</td><td class="todo">준비 중</td></tr>

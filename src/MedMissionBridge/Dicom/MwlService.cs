@@ -1,5 +1,7 @@
+using System.Collections.Concurrent;
 using System.Text;
 using FellowOakDicom;
+using MedMissionBridge.Data;
 using FellowOakDicom.Imaging.Codec;
 using FellowOakDicom.Network;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,10 +30,24 @@ public static class DicomSetup
 public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogger log,
         DicomServiceDependencies dependencies)
     : DicomService(stream, fallbackEncoding, log, dependencies),
-      IDicomServiceProvider, IDicomCEchoProvider, IDicomCFindProvider
+      IDicomServiceProvider, IDicomCEchoProvider, IDicomCFindProvider, IDicomNServiceProvider
 {
     /// <summary>Set by the host before the server starts; tests inject fakes.</summary>
     public static Func<Task<IReadOnlyList<DicomDataset>>>? WorklistSource { get; set; }
+
+    /// <summary>Applies a status the console reported. Set by the host; tests inject fakes.</summary>
+    public static Func<string, WorklistStatus, Task>? StatusSink { get; set; }
+
+    /// <summary>
+    /// Which survey each performed-procedure-step instance belongs to. The N-SET that
+    /// closes a step carries only the step's own SOP Instance UID, so the link made at
+    /// N-CREATE has to survive until then. It lives in memory: a bridge restarted
+    /// mid-exposure loses one link, and the operator closes that study by hand.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, string> StepRecords = new();
+
+    /// <summary>Tests reset the shared map so one case cannot leak into the next.</summary>
+    public static void ForgetSteps() => StepRecords.Clear();
 
     public Task OnReceiveAssociationRequestAsync(DicomAssociation association)
     {
@@ -45,7 +61,8 @@ public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogge
         foreach (var pc in association.PresentationContexts)
         {
             if (pc.AbstractSyntax == DicomUID.Verification
-                || pc.AbstractSyntax == DicomUID.ModalityWorklistInformationModelFind)
+                || pc.AbstractSyntax == DicomUID.ModalityWorklistInformationModelFind
+                || pc.AbstractSyntax == DicomUID.ModalityPerformedProcedureStep)
                 pc.AcceptTransferSyntaxes(
                     DicomTransferSyntax.ExplicitVRLittleEndian,
                     DicomTransferSyntax.ImplicitVRLittleEndian);
@@ -103,4 +120,85 @@ public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogge
 
         yield return new DicomCFindResponse(request, DicomStatus.Success);
     }
+
+    // ---- Modality Performed Procedure Step -------------------------------------------
+
+    public async Task<DicomNCreateResponse> OnNCreateRequestAsync(DicomNCreateRequest request)
+    {
+        var stepUid = request.SOPInstanceUID?.UID ?? string.Empty;
+        var dataset = request.Dataset ?? new DicomDataset();
+        var recordId = MppsMapping.FindRecordId(dataset);
+        var status = MppsMapping.ToWorklistStatus(
+            dataset.GetSingleValueOrDefault(DicomTag.PerformedProcedureStepStatus, string.Empty));
+
+        if (recordId is null)
+        {
+            // Answering Success would tell the console the step is tracked when it is
+            // not, and the study would silently never close.
+            Logger.LogWarning("MPPS N-CREATE {StepUid} matched no survey", stepUid);
+            return new DicomNCreateResponse(request, DicomStatus.NoSuchObjectInstance);
+        }
+
+        if (stepUid.Length > 0) StepRecords[stepUid] = recordId;
+        Logger.LogInformation("MPPS N-CREATE {StepUid} -> {RecordId} ({Status})",
+            stepUid, recordId, status?.ToString() ?? "no status");
+
+        await ApplyAsync(recordId, status);
+        return new DicomNCreateResponse(request, DicomStatus.Success);
+    }
+
+    public async Task<DicomNSetResponse> OnNSetRequestAsync(DicomNSetRequest request)
+    {
+        var stepUid = request.SOPInstanceUID?.UID ?? string.Empty;
+        var dataset = request.Dataset ?? new DicomDataset();
+        var status = MppsMapping.ToWorklistStatus(
+            dataset.GetSingleValueOrDefault(DicomTag.PerformedProcedureStepStatus, string.Empty));
+
+        // The N-SET normally carries nothing identifying but the step UID, so fall back
+        // to the dataset only when the link was lost with a restart.
+        if (!StepRecords.TryGetValue(stepUid, out var recordId))
+            recordId = MppsMapping.FindRecordId(dataset);
+
+        if (recordId is null)
+        {
+            Logger.LogWarning(
+                "MPPS N-SET {StepUid} matched no survey — the study stays open for the operator to close",
+                stepUid);
+            return new DicomNSetResponse(request, DicomStatus.NoSuchObjectInstance);
+        }
+
+        Logger.LogInformation("MPPS N-SET {StepUid} -> {RecordId} ({Status})",
+            stepUid, recordId, status?.ToString() ?? "no status");
+
+        await ApplyAsync(recordId, status);
+        // A finished step will never be referenced again; keeping it would grow forever.
+        if (status is WorklistStatus.Completed or WorklistStatus.Cancelled)
+            StepRecords.TryRemove(stepUid, out _);
+
+        return new DicomNSetResponse(request, DicomStatus.Success);
+    }
+
+    private async Task ApplyAsync(string recordId, WorklistStatus? status)
+    {
+        if (status is not { } target || StatusSink is not { } sink) return;
+        try { await sink(recordId, target); }
+        catch (Exception ex)
+        {
+            // A storage failure must not abort the association: the console would
+            // retry the whole exposure workflow over a bookkeeping problem.
+            Logger.LogError(ex, "Failed to apply {Status} to {RecordId} from MPPS", target, recordId);
+        }
+    }
+
+    public Task<DicomNActionResponse> OnNActionRequestAsync(DicomNActionRequest request) =>
+        Task.FromResult(new DicomNActionResponse(request, DicomStatus.SOPClassNotSupported));
+
+    public Task<DicomNDeleteResponse> OnNDeleteRequestAsync(DicomNDeleteRequest request) =>
+        Task.FromResult(new DicomNDeleteResponse(request, DicomStatus.SOPClassNotSupported));
+
+    public Task<DicomNEventReportResponse> OnNEventReportRequestAsync(DicomNEventReportRequest request) =>
+        Task.FromResult(new DicomNEventReportResponse(request, DicomStatus.SOPClassNotSupported));
+
+    public Task<DicomNGetResponse> OnNGetRequestAsync(DicomNGetRequest request) =>
+        Task.FromResult(new DicomNGetResponse(request, DicomStatus.SOPClassNotSupported));
 }
