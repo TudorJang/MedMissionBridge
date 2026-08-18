@@ -49,6 +49,8 @@ generated key, delete `api-key.txt` and restart — every tablet then needs the 
 - Design: `docs/superpowers/specs/2026-08-15-medmission-bridge-design.md`.
 - For the imaging-software team (MWL and REST, hand this one over): `docs/integration-spec.md`.
 - For the person running the laptop at a site (print it): `docs/field-operator-guide.md`.
+- Meeting deck on how the two programs fit together: `docs/medmission-briefing.html`.
+  Open it in a browser; arrow keys move between slides and Ctrl+P prints it as landscape pages.
 
 ## Package for deployment
 

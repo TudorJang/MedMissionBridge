@@ -1,0 +1,592 @@
+<title>MedMission 시스템 브리핑</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap">
+
+<style>
+  :root {
+    --paper: #F4F5F2;
+    --surface: #FFFFFF;
+    --surface-2: #EAEEEB;
+    --ink: #12211F;
+    --muted: #5A6C6A;
+    --line: #D3DAD6;
+    --brand: #0D4F4A;
+    --brand-wash: #E3EDEA;
+    --warn: #B0651A;
+    --warn-wash: #F7EEE2;
+    --shadow: 0 1px 2px rgba(18, 33, 31, .06), 0 12px 32px rgba(18, 33, 31, .07);
+    --sans: "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0A1211;
+      --surface: #11201E;
+      --surface-2: #182B28;
+      --ink: #E7EEEB;
+      --muted: #93A5A1;
+      --line: #24403C;
+      --brand: #52B7AA;
+      --brand-wash: #16302C;
+      --warn: #E0A55F;
+      --warn-wash: #2E2415;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 14px 36px rgba(0, 0, 0, .45);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #0A1211;
+    --surface: #11201E;
+    --surface-2: #182B28;
+    --ink: #E7EEEB;
+    --muted: #93A5A1;
+    --line: #24403C;
+    --brand: #52B7AA;
+    --brand-wash: #16302C;
+    --warn: #E0A55F;
+    --warn-wash: #2E2415;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 14px 36px rgba(0, 0, 0, .45);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .deck {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    padding: 26px 20px 72px;
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+
+  .slide {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: 38px 48px 42px;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    scroll-margin-top: 18px;
+  }
+
+  .rail {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .rail b { color: var(--brand); font-weight: 600; }
+  .rail .num { font-variant-numeric: tabular-nums; }
+
+  h1 {
+    font-size: clamp(30px, 4.2vw, 44px);
+    line-height: 1.14;
+    font-weight: 600;
+    letter-spacing: -.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2 {
+    font-size: clamp(22px, 2.8vw, 29px);
+    line-height: 1.22;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h3 { font-size: 14px; font-weight: 600; margin: 0; color: var(--brand); }
+  p { margin: 0; max-width: 70ch; }
+  .lede { font-size: 16.5px; color: var(--muted); max-width: 58ch; }
+  .body { flex: 1; display: flex; flex-direction: column; gap: 18px; justify-content: center; }
+  .tight { gap: 14px; }
+
+  .mono { font-family: var(--mono); font-size: .93em; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .split { display: grid; grid-template-columns: 1.55fr 1fr; gap: 26px; align-items: center; }
+
+  .card {
+    background: var(--surface-2);
+    border-radius: 3px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card p, .card li { font-size: 13.5px; color: var(--muted); }
+  .card.brand { background: var(--brand-wash); }
+  .card.warn { background: var(--warn-wash); }
+  .card.warn h3 { color: var(--warn); }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  ul { margin: 0; padding-left: 1.05em; display: flex; flex-direction: column; gap: 6px; }
+  li { font-size: 14px; }
+  li::marker { color: var(--brand); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  td.mono { font-size: 12.5px; }
+  td.done, td.todo { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  td.done { color: var(--brand); }
+  td.todo { color: var(--warn); }
+  .scroll-x { overflow-x: auto; }
+
+  figure { margin: 0; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  figure svg { width: 100%; max-width: 100%; height: auto; color: var(--ink); }
+  figcaption { font-size: 12.5px; color: var(--muted); text-align: center; max-width: 66ch; }
+
+  .pill {
+    display: inline-flex;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .05em;
+    padding: 3px 8px;
+    border-radius: 2px;
+    background: var(--brand-wash);
+    color: var(--brand);
+    white-space: nowrap;
+  }
+  .status { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .ask { display: flex; flex-direction: column; gap: 10px; }
+  .ask-row {
+    display: grid;
+    grid-template-columns: 26px 1fr 120px;
+    gap: 14px;
+    align-items: start;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .ask-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .ask-n { font-family: var(--mono); font-size: 16px; color: var(--brand); font-variant-numeric: tabular-nums; }
+  .ask-q { font-size: 15px; font-weight: 500; }
+  .ask-q span { display: block; font-size: 13px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+  .ask-who { font-size: 12.5px; color: var(--muted); }
+
+  .titlemeta { display: flex; gap: 32px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .titlemeta div { display: flex; flex-direction: column; gap: 1px; }
+  .titlemeta b { color: var(--ink); font-weight: 500; }
+
+  @media (max-width: 900px) {
+    .slide { padding: 26px 20px 32px; min-height: 0; }
+    .grid-2, .grid-3, .split { grid-template-columns: 1fr; }
+    .ask-row { grid-template-columns: 22px 1fr; }
+    .ask-who { grid-column: 2; }
+  }
+
+  @media print {
+    @page { size: landscape; margin: 8mm; }
+    body { background: #fff; }
+    .deck { gap: 0; padding: 0; max-width: none; }
+    .slide { break-after: page; box-shadow: none; border: 0; min-height: 0; padding: 9mm 8mm; }
+    .slide:last-child { break-after: auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { scroll-behavior: auto !important; }
+  }
+</style>
+
+<main class="deck">
+
+  <!-- 1 -->
+  <section class="slide">
+    <div class="rail"><b>MedMission</b><span class="num">01 / 05</span></div>
+    <div class="body">
+      <span class="kicker">결핵 검진 현장 · 태블릿 문진에서 X-ray 워크리스트까지</span>
+      <h1>태블릿과 브릿지, 두 프로그램 개요</h1>
+      <p class="lede">태블릿 문진이 랩톱을 거쳐 콘솔 워크리스트로 그대로 올라감. 촬영 담당이 환자 정보를 다시 입력하지 않는 것이 목표.</p>
+      <figure>
+        <svg viewBox="0 0 1000 250" role="img" aria-label="현재는 종이 문진을 촬영실에서 사람이 재입력하지만, 변경 후에는 태블릿 문진이 랩톱을 거쳐 워크리스트에 자동 등재되어 재입력 단계가 사라짐을 보여주는 비교도">
+          <defs>
+            <marker id="ah0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+            </marker>
+            <marker id="ah0w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--warn)"></path>
+            </marker>
+          </defs>
+
+          <text x="20" y="30" font-size="12" letter-spacing="1.4" fill="currentColor" opacity=".6">현재</text>
+          <rect x="20" y="44" width="150" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="95" y="75" text-anchor="middle" font-size="12.5" fill="currentColor">종이 문진</text>
+
+          <rect x="290" y="44" width="190" height="52" rx="3" fill="var(--warn-wash)" stroke="var(--warn)" stroke-width="1.5"></rect>
+          <text x="385" y="68" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--warn)">촬영실에서 재입력</text>
+          <text x="385" y="86" text-anchor="middle" font-size="11" fill="var(--warn)" opacity=".85">사람 손 · 오타 · 대기</text>
+
+          <rect x="600" y="44" width="150" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="675" y="75" text-anchor="middle" font-size="12.5" fill="currentColor">촬영</text>
+
+          <line x1="176" y1="70" x2="284" y2="70" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah0)"></line>
+          <line x1="486" y1="70" x2="594" y2="70" stroke="var(--warn)" stroke-width="1.5" marker-end="url(#ah0w)"></line>
+          <text x="800" y="66" font-size="11.5" fill="currentColor" opacity=".65">문진 내용은</text>
+          <text x="800" y="84" font-size="11.5" fill="currentColor" opacity=".65">판독까지 가지 못함</text>
+
+          <line x1="20" y1="126" x2="980" y2="126" stroke="currentColor" stroke-width="1" opacity=".2"></line>
+
+          <text x="20" y="162" font-size="12" letter-spacing="1.4" fill="var(--brand)">변경 후</text>
+          <rect x="20" y="176" width="150" height="52" rx="3" fill="var(--brand-wash)" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="95" y="207" text-anchor="middle" font-size="12.5" fill="currentColor">태블릿 문진</text>
+
+          <rect x="290" y="176" width="190" height="52" rx="3" fill="var(--brand-wash)" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="385" y="200" text-anchor="middle" font-size="12.5" font-weight="600" fill="currentColor">랩톱(브릿지)</text>
+          <text x="385" y="218" text-anchor="middle" font-size="11" fill="currentColor" opacity=".75">워크리스트 자동 등재</text>
+
+          <rect x="600" y="176" width="150" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="675" y="207" text-anchor="middle" font-size="12.5" fill="currentColor">촬영</text>
+
+          <line x1="176" y1="202" x2="284" y2="202" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah0)"></line>
+          <line x1="486" y1="202" x2="594" y2="202" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah0)"></line>
+          <text x="800" y="198" font-size="11.5" fill="var(--brand)">문진 답변은</text>
+          <text x="800" y="216" font-size="11.5" fill="var(--brand)">API로 조회 가능</text>
+        </svg>
+        <figcaption>없애려는 것은 가운데 한 칸 — 촬영실에서 환자 정보를 사람이 다시 입력하는 단계.</figcaption>
+      </figure>
+      <div class="grid-2">
+        <div class="card">
+          <h3>이 회의의 목적</h3>
+          <p>랩톱 SW가 워크리스트를 조회하고, 촬영 영상의 환자 ID로 문진을 가져가는 부분 합의. MDVizio-X 매뉴얼 검토 완료, 결정 필요 6건(5쪽).</p>
+        </div>
+        <div class="card">
+          <h3>브릿지가 하지 않는 것</h3>
+          <p>먼저 호출하지 않음. 영상 다루지 않음. 저장하지 않음. 조회당하는 쪽.</p>
+        </div>
+      </div>
+      <div class="titlemeta">
+        <div><span>구성</span><b>Android 태블릿 앱 + Windows 랩톱 브릿지</b></div>
+        <div><span>연동</span><b>DICOM Modality Worklist + HTTP REST</b></div>
+        <div><span>전제</span><b>폐쇄망 · 서버 없음 · 랩톱 1대 + 태블릿 N대</b></div>
+        <div><span>상태</span><b>구현 완료 · 에뮬레이터 전 구간 검증</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="rail"><b>전체 구성</b><span class="num">02 / 05</span></div>
+    <div class="body tight">
+      <h2>랩톱 한 대가 가운데</h2>
+      <div class="split">
+        <figure>
+          <svg viewBox="0 0 1000 360" role="img" aria-label="태블릿이 HTTP로 브릿지에 문진을 보내고, X-ray 콘솔과 랩톱 소프트웨어가 DICOM과 REST로 브릿지에서 데이터를 가져가는 구성도">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+              </marker>
+              <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--warn)"></path>
+              </marker>
+            </defs>
+
+            <rect x="24" y="70" width="150" height="72" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+            <rect x="34" y="82" width="150" height="72" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"></rect>
+            <rect x="44" y="94" width="150" height="72" rx="3" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"></rect>
+            <text x="119" y="124" text-anchor="middle" font-size="14" font-weight="600" fill="currentColor">태블릿 ×N</text>
+            <text x="119" y="146" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".7">Android 문진 앱</text>
+
+            <rect x="392" y="60" width="216" height="150" rx="3" fill="var(--brand-wash)" stroke="currentColor" stroke-width="1.5"></rect>
+            <text x="500" y="94" text-anchor="middle" font-size="15" font-weight="600" fill="currentColor">브릿지 (랩톱)</text>
+            <line x1="412" y1="108" x2="588" y2="108" stroke="currentColor" stroke-width="1" opacity=".35"></line>
+            <text x="500" y="130" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".8">문진 수신 API · SQLite</text>
+            <text x="500" y="152" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".8">DICOM MWL SCP</text>
+            <text x="500" y="174" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".8">관리 화면 · mDNS 광고</text>
+
+            <rect x="790" y="60" width="196" height="150" rx="3" fill="none" stroke="var(--warn)" stroke-width="1.5"></rect>
+            <text x="888" y="94" text-anchor="middle" font-size="15" font-weight="600" fill="var(--warn)">MDVizio-X AI</text>
+            <line x1="810" y1="108" x2="966" y2="108" stroke="var(--warn)" stroke-width="1" opacity=".4"></line>
+            <text x="888" y="130" text-anchor="middle" font-size="11.5" fill="var(--warn)" opacity=".9">MWL SCU · 촬영 · AI 판독</text>
+            <text x="888" y="152" text-anchor="middle" font-size="11.5" fill="var(--warn)" opacity=".9">MPPS SCU · PACS SCU</text>
+            <text x="888" y="180" text-anchor="middle" font-size="11" fill="var(--warn)" opacity=".7">콘솔과 판독 SW가</text>
+            <text x="888" y="196" text-anchor="middle" font-size="11" fill="var(--warn)" opacity=".7">같은 프로그램</text>
+
+            <line x1="196" y1="130" x2="386" y2="130" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah)"></line>
+            <text x="291" y="118" text-anchor="middle" font-size="11.5" fill="currentColor">문진 전송 (HTTP)</text>
+            <text x="291" y="150" text-anchor="middle" font-size="11" fill="currentColor" opacity=".6">밀어 넣음</text>
+
+            <line x1="784" y1="106" x2="614" y2="106" stroke="var(--warn)" stroke-width="1.5" marker-end="url(#ahb)"></line>
+            <text x="699" y="94" text-anchor="middle" font-size="11.5" fill="var(--warn)">C-FIND 워크리스트</text>
+            <text x="699" y="122" text-anchor="middle" font-size="11" fill="var(--warn)" opacity=".75">문진 요약도 함께 실림</text>
+
+            <line x1="614" y1="168" x2="784" y2="168" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ahb)"></line>
+            <text x="699" y="156" text-anchor="middle" font-size="11.5" fill="var(--warn)">MPPS 촬영 시작·완료</text>
+            <text x="699" y="184" text-anchor="middle" font-size="11" fill="var(--warn)" opacity=".75">브릿지 미구현 — 예정</text>
+
+            <rect x="12" y="272" width="964" height="1" fill="currentColor" opacity=".25"></rect>
+            <text x="24" y="300" font-size="12" fill="currentColor" opacity=".75">폐쇄망 · 인터넷 없음 · 서버 없음 · 데이터는 이 랩톱에만 존재</text>
+            <text x="24" y="324" font-size="12" fill="currentColor" opacity=".75">랩톱이 꺼져 있어도 태블릿은 계속 작성. 복귀하면 밀린 문진을 스스로 전송</text>
+          </svg>
+          <figcaption>브릿지는 먼저 연결하지 않음. 태블릿이 밀어 넣고, MDVizio-X가 가져감. 점선은 MDVizio-X가 보내오는 방향(미구현).</figcaption>
+        </figure>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card">
+            <h3>태블릿 앱</h3>
+            <p>7개 섹션 문진, 입력 중 자동 저장. 모든 기록을 태블릿 DB에 먼저 저장하므로 Wi-Fi가 끊겨도 접수 계속 가능. 브릿지는 mDNS로 자동 탐색, 전송 실패 건은 15분 주기 재시도.</p>
+          </div>
+          <div class="card">
+            <h3>브릿지</h3>
+            <p>폴더 복사 후 실행 파일 하나. .NET 설치·DB 서버 불필요. MDVizio-X에는 <b>워크리스트</b>로, HTTP를 부를 수 있는 쪽에는 <b>REST</b>로 내어줌. 관리 화면은 그 랩톱 본체에서만 열림.</p>
+          </div>
+          <div class="status">
+            <span class="pill">Android 8.0+</span>
+            <span class="pill">서명 릴리스 APK</span>
+            <span class="pill">.NET 9 단일 exe</span>
+            <span class="pill">SQLite</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="rail"><b>흐름과 상태</b><span class="num">03 / 05</span></div>
+    <div class="body tight">
+      <h2>언제 워크리스트에 오르고, 언제 내려가는가</h2>
+      <figure>
+        <svg viewBox="0 0 1000 340" role="img" aria-label="문진 작성부터 완료 처리까지 다섯 단계와, 그중 Received·InProgress 상태 구간만 워크리스트에 노출됨을 보여주는 흐름도">
+          <defs>
+            <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+            </marker>
+          </defs>
+
+          <line x1="60" y1="112" x2="944" y2="112" stroke="currentColor" stroke-width="1" opacity=".3"></line>
+
+          <circle cx="80" cy="112" r="7" fill="currentColor"></circle>
+          <text x="80" y="88" text-anchor="middle" font-size="12.5" font-weight="600" fill="currentColor">1 · 문진 작성</text>
+          <text x="80" y="142" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">태블릿 · 번호 자동 부여</text>
+
+          <circle cx="290" cy="112" r="7" fill="currentColor"></circle>
+          <text x="290" y="88" text-anchor="middle" font-size="12.5" font-weight="600" fill="currentColor">2 · 랩톱 전송</text>
+          <text x="290" y="142" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">실패 시 자동 재시도</text>
+
+          <circle cx="500" cy="112" r="9" fill="var(--warn)"></circle>
+          <text x="500" y="88" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--warn)">3 · 워크리스트 등재</text>
+          <text x="500" y="142" text-anchor="middle" font-size="11" fill="var(--warn)" opacity=".75">도착 즉시, 별도 조작 없음</text>
+
+          <circle cx="710" cy="112" r="7" fill="var(--warn)"></circle>
+          <text x="710" y="88" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--warn)">4 · 촬영</text>
+          <text x="710" y="142" text-anchor="middle" font-size="11" fill="var(--warn)" opacity=".75">영상의 환자 ID로 문진 조회</text>
+
+          <circle cx="920" cy="112" r="7" fill="currentColor"></circle>
+          <text x="920" y="88" text-anchor="middle" font-size="12.5" font-weight="600" fill="currentColor">5 · 완료 처리</text>
+          <text x="920" y="142" text-anchor="middle" font-size="11" fill="currentColor" opacity=".65">현재는 운영자 수동</text>
+
+          <line x1="96" y1="112" x2="274" y2="112" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah2)"></line>
+          <line x1="306" y1="112" x2="482" y2="112" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah2)"></line>
+          <line x1="518" y1="112" x2="694" y2="112" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah2)"></line>
+          <line x1="726" y1="112" x2="904" y2="112" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah2)"></line>
+
+          <!-- worklist exposure band -->
+          <rect x="440" y="186" width="480" height="58" rx="3" fill="var(--brand-wash)" stroke="currentColor" stroke-width="1" stroke-opacity=".4"></rect>
+          <text x="680" y="211" text-anchor="middle" font-size="12.5" font-weight="600" fill="currentColor">워크리스트에 노출되는 구간</text>
+          <text x="680" y="231" text-anchor="middle" font-size="11.5" font-family="monospace" fill="currentColor" opacity=".8">Received · InProgress</text>
+          <line x1="500" y1="124" x2="500" y2="182" stroke="currentColor" stroke-width="1" stroke-opacity=".4"></line>
+          <line x1="920" y1="124" x2="920" y2="182" stroke="currentColor" stroke-width="1" stroke-opacity=".4"></line>
+
+          <rect x="24" y="186" width="330" height="58" rx="3" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".3" stroke-dasharray="4 3"></rect>
+          <text x="189" y="211" text-anchor="middle" font-size="12.5" fill="currentColor" opacity=".7">아직 랩톱에 없음</text>
+          <text x="189" y="231" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".55">태블릿에만 보관</text>
+
+          <text x="24" y="288" font-size="12" fill="currentColor" opacity=".75">5번 이후 상태 — <tspan font-family="monospace">Completed</tspan> · <tspan font-family="monospace">Cancelled</tspan>. 워크리스트에서 제외되나 목록에는 잔존</text>
+          <text x="24" y="312" font-size="12" fill="var(--warn)">완료 처리를 아무도 하지 않으면 워크리스트가 하루 종일 누적 — 결정 항목 2번</text>
+        </svg>
+        <figcaption>1~2번 태블릿, 3·5번 브릿지, 4번 콘솔 담당. 브릿지가 먼저 말을 거는 단계는 없음.</figcaption>
+      </figure>
+      <div class="grid-2">
+        <div class="card warn">
+          <h3>150명 규모에서 생기는 문제</h3>
+          <p>완료 처리가 밀리면 목록이 하루 종일 누적. 눈앞 환자를 긴 목록에서 찾아야 함.</p>
+        </div>
+        <div class="card brand">
+          <h3>해법 — MPPS (5쪽 1번)</h3>
+          <p>콘솔이 촬영 시작·완료를 브릿지에 알려주는 DICOM 표준. 상태가 자동으로 바뀌어 목록이 스스로 짧아짐. <b>랩톱 SW 수정 없음.</b></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="rail"><b>연동 지점</b><span class="num">04 / 05</span></div>
+    <div class="body tight">
+      <h2>표준 C-FIND로 목록, HTTP로 상세</h2>
+      <div class="grid-2">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span class="kicker">A · DICOM 워크리스트</span>
+          <div class="scroll-x">
+            <table>
+              <tr><th>항목</th><th>값</th></tr>
+              <tr><td>AE Title</td><td class="mono">MEDMISSION · 검사 안 함</td></tr>
+              <tr><td>포트</td><td class="mono">11112 · 랩톱별 상이</td></tr>
+              <tr><td>지원</td><td class="mono">C-ECHO, MWL C-FIND</td></tr>
+              <tr><td>문자셋</td><td class="mono">ISO_IR 192 (UTF-8)</td></tr>
+              <tr><td>조회 키</td><td>Patient ID, Patient Name, <b>Accession Number</b>, Modality, SPS Start Date</td></tr>
+            </table>
+          </div>
+          <p style="font-size:13px;color:var(--muted)">표에 없는 조회 키는 거부하지 않고 무시. 이름·접수번호는 와일드카드 <span class="mono">* ?</span> 및 대소문자 무시 — 문진지 번호를 손으로 치는 동선이라 관대하게 처리. Windows가 11112를 예약한 랩톱은 12112 등으로 변경되므로 <b>포트는 현장 확인 필요</b>.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span class="kicker">B · 문진 조회 REST</span>
+          <div class="scroll-x">
+            <table>
+              <tr><th>용도</th><th>호출</th></tr>
+              <tr><td>환자 ID로 — 권장</td><td class="mono">GET /api/v1/surveys/{환자ID}</td></tr>
+              <tr><td>접수번호로 — 보조</td><td class="mono">GET /api/v1/surveys?accession=…</td></tr>
+              <tr><td>인증</td><td class="mono">X-Api-Key 헤더</td></tr>
+            </table>
+          </div>
+          <p style="font-size:13px;color:var(--muted)">키는 랩톱마다 다름 — 브릿지가 첫 실행 때 생성해 운영자 화면에 표시. <b>코드에 고정 금지.</b> 응답은 태블릿이 보낸 JSON 원문 그대로이며, <b>답 안 한 항목은 키 자체가 없음</b>(<span class="mono">null</span> 아님).</p>
+        </div>
+      </div>
+      <figure>
+        <svg viewBox="0 0 1000 158" role="img" aria-label="문진의 recordId는 실선으로 Patient ID에 대응해 항상 신뢰할 수 있고, 접수번호 no는 점선으로 Accession Number에 대응해 비거나 겹칠 수 있음을 보여주는 매핑도">
+          <defs>
+            <marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+            </marker>
+          </defs>
+          <text x="150" y="18" text-anchor="middle" font-size="11" letter-spacing="1.4" fill="currentColor" opacity=".6">문진 JSON</text>
+          <text x="850" y="18" text-anchor="middle" font-size="11" letter-spacing="1.4" fill="currentColor" opacity=".6">DICOM 워크리스트</text>
+
+          <rect x="30" y="32" width="240" height="46" rx="3" fill="var(--brand-wash)" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="150" y="52" text-anchor="middle" font-size="12.5" font-family="monospace" fill="currentColor">recordId</text>
+          <text x="150" y="69" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">UUID · 항상 존재 · 유일</text>
+
+          <rect x="730" y="32" width="240" height="46" rx="3" fill="var(--brand-wash)" stroke="currentColor" stroke-width="1.5"></rect>
+          <text x="850" y="52" text-anchor="middle" font-size="12.5" font-family="monospace" fill="currentColor">Patient ID (0010,0020)</text>
+          <text x="850" y="69" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">항상 채워서 내려감</text>
+
+          <line x1="276" y1="55" x2="724" y2="55" stroke="currentColor" stroke-width="1.5" marker-end="url(#ah5)"></line>
+          <text x="500" y="47" text-anchor="middle" font-size="11.5" fill="currentColor">같은 값 · 매칭 기준으로 사용</text>
+
+          <rect x="30" y="100" width="240" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"></rect>
+          <text x="150" y="120" text-anchor="middle" font-size="12.5" font-family="monospace" fill="currentColor">no</text>
+          <text x="150" y="137" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">TAB-A3F2-0007 · 문진지 인쇄</text>
+
+          <rect x="730" y="100" width="240" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"></rect>
+          <text x="850" y="120" text-anchor="middle" font-size="12.5" font-family="monospace" fill="currentColor">Accession Number</text>
+          <text x="850" y="137" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">비거나 겹칠 수 있음</text>
+
+          <line x1="276" y1="123" x2="724" y2="123" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ah5)"></line>
+          <text x="500" y="115" text-anchor="middle" font-size="11.5" fill="currentColor" opacity=".75">보조 경로 · 유일성 보장 없음</text>
+        </svg>
+        <figcaption>실선만 매칭 기준으로 쓸 것. 점선과 환자 이름은 비어 있을 수 있음. 전 구간 평문 HTTP — 폐쇄망 전제로 TLS 보류 중.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="rail"><b>결정 사항 · 현황</b><span class="num">05 / 05</span></div>
+    <div class="body tight">
+      <h2>MDVizio-X 매뉴얼 검토 후 정리한 여섯 가지</h2>
+      <div class="ask">
+        <div class="ask-row">
+          <span class="ask-n">1</span>
+          <div class="ask-q">MPPS를 켤 것인가 — <b>지원 확인됨</b>
+            <span>매뉴얼에 설정 항목 존재. 켜면 촬영 시작·완료가 자동 반영돼 목록이 스스로 비워짐. 브릿지 SCP는 미구현 — 우리 작업. 필요한 것은 CLIENT AET과 포트</span></div>
+          <span class="ask-who">우리 구현</span>
+        </div>
+        <div class="ask-row">
+          <span class="ask-n">2</span>
+          <div class="ask-q">전체 문진을 어디서 볼 것인가
+            <span>MDVizio-X에 HTTP 클라이언트 없음. 요약은 워크리스트에 실어 보냄(구현 완료). 전체가 필요하면 조회 기능 추가 또는 브릿지 화면 참조</span></div>
+          <span class="ask-who">공동 결정</span>
+        </div>
+        <div class="ask-row">
+          <span class="ask-n">3</span>
+          <div class="ask-q">Modality는 CR인가 DX인가
+            <span>브릿지 기본 CR. 디텍터가 DX로 보고하면 설정 변경</span></div>
+          <span class="ask-who">현장 확인</span>
+        </div>
+        <div class="ask-row">
+          <span class="ask-n">4</span>
+          <div class="ask-q">Character Set 설정값
+            <span>브릿지는 ISO_IR 192(UTF-8) 고정 전송. 상대가 Latin-1이면 비ASCII 이름이 깨짐</span></div>
+          <span class="ask-who">현장 확인</span>
+        </div>
+        <div class="ask-row">
+          <span class="ask-n">5</span>
+          <div class="ask-q">현장에 PACS가 있는가
+            <span>없으면 영상은 그 랩톱과 USB에만 존재. 브릿지가 Storage SCP를 맡는 선택지 있음 — 범위 확대</span></div>
+          <span class="ask-who">운영 정책</span>
+        </div>
+        <div class="ask-row">
+          <span class="ask-n">6</span>
+          <div class="ask-q">AE Title 검사 · TLS
+            <span>현재 모든 AE 수용, 전 구간 평문. 폐쇄망 전제. 병원 내부망에 붙는다면 재검토</span></div>
+          <span class="ask-who">운영 정책</span>
+        </div>
+      </div>
+      <div class="scroll-x">
+        <table>
+          <tr><th>항목</th><th>담당</th><th>상태</th></tr>
+          <tr><td>태블릿 앱 · 서명 APK</td><td>브릿지 팀</td><td class="done">완료</td></tr>
+          <tr><td>브릿지 단일 실행 파일 · 배포본</td><td>브릿지 팀</td><td class="done">완료</td></tr>
+          <tr><td>문진 전송 · 워크리스트 조회 검증</td><td>브릿지 팀</td><td class="done">완료</td></tr>
+          <tr><td>연동 규격 문서 · 운영자 가이드</td><td>브릿지 팀</td><td class="done">완료</td></tr>
+          <tr><td>워크리스트 태그 보강 · 문진 요약 탑재</td><td>브릿지 팀</td><td class="done">완료</td></tr>
+          <tr><td>MPPS SCP 구현</td><td>브릿지 팀</td><td class="todo">미착수</td></tr>
+          <tr><td>워크리스트 실조회 검증</td><td>MDVizio-X</td><td class="todo">미착수</td></tr>
+          <tr><td>위 결정 항목 6건 회신</td><td>MDVizio-X</td><td class="todo">오늘 논의</td></tr>
+          <tr><td>실물 태블릿 확보 · 랩톱별 포트 확인 · 운영자 교육</td><td>현장</td><td class="todo">준비 중</td></tr>
+        </table>
+      </div>
+      <p style="font-size:13px;color:var(--muted)">문진 수집만 놓고 보면 파일럿은 즉시 가능. 촬영·판독 자동 연계까지 가는 정식 적용은 MDVizio-X 연동 일정에 종속. 상세 규격은 <span class="mono">docs/integration-spec.md</span> 참조.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // 방향키·PageUp/Down으로 슬라이드 이동. 그 외에는 평범한 스크롤 페이지라
+  // 이 스크립트 없이도 읽히고 인쇄된다.
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  function go(step) {
+    const y = window.scrollY + 80;
+    let i = slides.findIndex((s) => s.offsetTop > y);
+    if (i === -1) i = slides.length;
+    const target = slides[Math.min(Math.max(i - 1 + step, 0), slides.length - 1)];
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") {
+      e.preventDefault(); go(1);
+    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "PageUp") {
+      e.preventDefault(); go(-1);
+    }
+  });
+</script>
