@@ -197,7 +197,9 @@
   .titlemeta div { display: flex; flex-direction: column; gap: 1px; }
   .titlemeta b { color: var(--ink); font-weight: 500; }
 
-  @media (max-width: 900px) {
+  /* Screen only: some print engines lay out at a narrow width and would
+     otherwise collapse every two-column slide onto two pages. */
+  @media screen and (max-width: 900px) {
     .slide { padding: 26px 20px 32px; min-height: 0; }
     .grid-2, .grid-3, .split { grid-template-columns: 1fr; }
     .ask-row { grid-template-columns: 22px 1fr; }
@@ -205,11 +207,56 @@
   }
 
   @media print {
-    @page { size: landscape; margin: 8mm; }
+    /* 16:9 so a printed page matches what the projector shows. */
+    @page { size: 338mm 190mm; margin: 7mm; }
     body { background: #fff; }
     .deck { gap: 0; padding: 0; max-width: none; }
-    .slide { break-after: page; box-shadow: none; border: 0; min-height: 0; padding: 9mm 8mm; }
+    /* The narrow-screen stacking rule matches during printing in some engines,
+       which turns two columns into one and pushes every slide over a page. */
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .split { grid-template-columns: 1.55fr 1fr; }
+    .ask-row { grid-template-columns: 26px 1fr 120px; }
+    .slide {
+      break-after: page;
+      break-inside: avoid;
+      box-shadow: none;
+      border: 0;
+      min-height: 0;
+      height: 176mm;
+      padding: 5mm 7mm;
+      gap: 12px;
+    }
     .slide:last-child { break-after: auto; }
+    .body { gap: 12px; }
+    h1 { font-size: 33px; }
+    h2 { font-size: 23px; }
+    h3 { font-size: 13px; }
+    .lede { font-size: 15px; }
+    .card { padding: 11px 13px; gap: 4px; }
+    .card p, .card li { font-size: 12px; }
+    table { font-size: 12px; }
+    th, td { padding: 5px 8px; }
+    figcaption { font-size: 11.5px; }
+    .titlemeta { font-size: 12px; gap: 24px; }
+    .kicker { font-size: 10px; }
+    p[style] { font-size: 12px !important; }
+    /* Diagrams scale by width, so cap the height or a tall one pushes a slide
+       onto a second page. */
+    figure svg { max-height: 74mm; }
+    .slide:first-child figure svg { max-height: 56mm; }
+    h1 { font-size: 30px; }
+    .lede { font-size: 14px; max-width: 76ch; }
+    .rail { padding-bottom: 8px; }
+    li { font-size: 12px; }
+    .pill { font-size: 10px; }
+    /* The two densest slides: the identifier figure and the eleven-row status
+       table are what push them over a page. */
+    .slide:nth-child(4) figure svg { max-height: 30mm; }
+    .slide:nth-child(4) th, .slide:nth-child(4) td { padding: 4px 7px; }
+    .slide:nth-child(5) table { font-size: 11px; }
+    .slide:nth-child(5) th, .slide:nth-child(5) td { padding: 3px 8px; }
+    .slide:nth-child(5) .card p { font-size: 11.5px; }
   }
 
   @media (prefers-reduced-motion: reduce) {

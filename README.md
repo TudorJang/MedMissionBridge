@@ -53,8 +53,10 @@ generated key, delete `api-key.txt` and restart — every tablet then needs the 
 - For the person running the laptop at a site (print it): `docs/field-operator-guide.md`.
 - What the field studies show about the console and its AI pipeline, and what that
   changed here: `docs/field-data-findings.md`.
-- Meeting deck on how the two programs fit together: `docs/medmission-briefing.html`.
-  Open it in a browser; arrow keys move between slides and Ctrl+P prints it as landscape pages.
+- Meeting deck on how the two programs fit together, in three forms that hold the same
+  five slides: `docs/medmission-briefing.html` (arrow keys move between slides),
+  `docs/medmission-briefing.pdf` (16:9 pages, for projecting or printing), and
+  `docs/medmission-briefing.pptx` (editable — rebuilt by `docs/build-briefing-pptx.py`).
 
 ## Package for deployment
 
