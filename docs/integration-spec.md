@@ -226,10 +226,11 @@ clear the worklist:
 | N-SET on an abandoned exam | `DISCONTINUED` | `Cancelled` |
 
 The N-CREATE has to name the survey, by Patient ID or by the Study Instance UID the
-bridge supplied in the worklist — either identifies it. A step naming neither is answered
-with `No Such Object Instance` rather than `Success`, because acknowledging a step the
-bridge cannot track would leave the study open with nothing to show why. The N-SET then
-needs only the step's own SOP Instance UID; the bridge remembers the link.
+bridge supplied in the worklist — either identifies it. A step that names neither, **or
+that names a patient this bridge never received**, is answered with `No Such Object
+Instance` rather than `Success`: acknowledging a step the bridge cannot track would leave
+the study open with nothing to show why. The N-SET then needs only the step's own SOP
+Instance UID; the bridge remembers the link.
 
 That link is held in memory. A bridge restarted between the start and the end of one
 exposure loses it, answers the N-SET with `No Such Object Instance`, and logs it; the

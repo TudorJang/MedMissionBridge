@@ -34,7 +34,7 @@ public class MppsRoundTripTests
         MwlService.StatusSink = (recordId, status) =>
         {
             lock (applied) applied.Add(new Applied(recordId, status));
-            return Task.CompletedTask;
+            return Task.FromResult(recordId == RecordId);
         };
         return applied;
     }
@@ -134,6 +134,29 @@ public class MppsRoundTripTests
         // Answering Success would tell the console the step is tracked when it is not.
         Assert.Equal(DicomStatus.NoSuchObjectInstance, status);
         Assert.Empty(applied);
+    }
+
+    [Fact]
+    public async Task a_step_about_a_patient_we_never_received_is_refused()
+    {
+        // A well-formed id that names no survey here. Answering Success would leave the
+        // console believing the study is tracked, which is how one silently never closes.
+        DicomSetup.EnsureInitialized();
+        var applied = CaptureStatuses();
+        var port = FreePort();
+        using var server = new MwlServer("127.0.0.1", port);
+
+        DicomStatus? status = null;
+        var create = new DicomNCreateRequest(
+            DicomUID.ModalityPerformedProcedureStep, DicomUID.Generate())
+        { Dataset = StartDataset("a-patient-that-was-never-sent-here") };
+        create.OnResponseReceived += (_, resp) => status = resp.Status;
+
+        var client = DicomClientFactory.Create("127.0.0.1", port, false, "MDVIZIO", "MEDMISSION");
+        await client.AddRequestAsync(create);
+        await client.SendAsync();
+
+        Assert.Equal(DicomStatus.NoSuchObjectInstance, status);
     }
 
     [Fact]

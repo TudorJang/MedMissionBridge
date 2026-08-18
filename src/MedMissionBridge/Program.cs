@@ -92,6 +92,9 @@ if (!isTesting)
         if (result != StatusChangeResult.Changed)
             Log.Warning("MPPS reported {Status} for {RecordId} but the record is {Result}",
                 status, recordId, result);
+        // An out-of-order transition still concerns a survey we hold; only a missing
+        // one means the console is reporting about something we cannot track.
+        return result != StatusChangeResult.NotFound;
     };
 
     // Read before starting the SCP so a bind failure can name the range in the way.

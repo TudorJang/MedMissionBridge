@@ -19,8 +19,14 @@ public static class DicomSetup
         lock (Gate)
         {
             if (_done) return;
+            // Without this the DICOM services log into a container of their own and the
+            // log file never sees a C-FIND or an MPPS message — which is exactly what
+            // an operator is told to check when the worklist misbehaves.
             new DicomSetupBuilder()
-                .RegisterServices(s => s.AddFellowOakDicom())
+                .RegisterServices(s => s
+                    .AddFellowOakDicom()
+                    .AddLogging(builder => Serilog.SerilogLoggingBuilderExtensions
+                        .AddSerilog(builder, dispose: false)))
                 .Build();
             _done = true;
         }
@@ -35,8 +41,9 @@ public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogge
     /// <summary>Set by the host before the server starts; tests inject fakes.</summary>
     public static Func<Task<IReadOnlyList<DicomDataset>>>? WorklistSource { get; set; }
 
-    /// <summary>Applies a status the console reported. Set by the host; tests inject fakes.</summary>
-    public static Func<string, WorklistStatus, Task>? StatusSink { get; set; }
+    /// <summary>Applies a status the console reported and answers whether the survey
+    /// exists at all. Set by the host; tests inject fakes.</summary>
+    public static Func<string, WorklistStatus, Task<bool>>? StatusSink { get; set; }
 
     /// <summary>
     /// Which survey each performed-procedure-step instance belongs to. The N-SET that
@@ -139,11 +146,19 @@ public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogge
             return new DicomNCreateResponse(request, DicomStatus.NoSuchObjectInstance);
         }
 
-        if (stepUid.Length > 0) StepRecords[stepUid] = recordId;
         Logger.LogInformation("MPPS N-CREATE {StepUid} -> {RecordId} ({Status})",
             stepUid, recordId, status?.ToString() ?? "no status");
 
-        await ApplyAsync(recordId, status);
+        if (!await ApplyAsync(recordId, status))
+        {
+            // The id is well formed but names no survey here. Success would tell the
+            // console the step is tracked when nothing is tracking it.
+            Logger.LogWarning("MPPS N-CREATE {StepUid} names {RecordId}, which is not a survey here",
+                stepUid, recordId);
+            return new DicomNCreateResponse(request, DicomStatus.NoSuchObjectInstance);
+        }
+
+        if (stepUid.Length > 0) StepRecords[stepUid] = recordId;
         return new DicomNCreateResponse(request, DicomStatus.Success);
     }
 
@@ -170,7 +185,12 @@ public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogge
         Logger.LogInformation("MPPS N-SET {StepUid} -> {RecordId} ({Status})",
             stepUid, recordId, status?.ToString() ?? "no status");
 
-        await ApplyAsync(recordId, status);
+        if (!await ApplyAsync(recordId, status))
+        {
+            Logger.LogWarning("MPPS N-SET {StepUid} names {RecordId}, which is not a survey here",
+                stepUid, recordId);
+            return new DicomNSetResponse(request, DicomStatus.NoSuchObjectInstance);
+        }
         // A finished step will never be referenced again; keeping it would grow forever.
         if (status is WorklistStatus.Completed or WorklistStatus.Cancelled)
             StepRecords.TryRemove(stepUid, out _);
@@ -178,15 +198,18 @@ public class MwlService(INetworkStream stream, Encoding fallbackEncoding, ILogge
         return new DicomNSetResponse(request, DicomStatus.Success);
     }
 
-    private async Task ApplyAsync(string recordId, WorklistStatus? status)
+    /// <summary>False only when the survey does not exist. A status we do not recognise,
+    /// or no sink at all, leaves the record alone without calling the step untracked.</summary>
+    private async Task<bool> ApplyAsync(string recordId, WorklistStatus? status)
     {
-        if (status is not { } target || StatusSink is not { } sink) return;
-        try { await sink(recordId, target); }
+        if (status is not { } target || StatusSink is not { } sink) return true;
+        try { return await sink(recordId, target); }
         catch (Exception ex)
         {
             // A storage failure must not abort the association: the console would
             // retry the whole exposure workflow over a bookkeeping problem.
             Logger.LogError(ex, "Failed to apply {Status} to {RecordId} from MPPS", target, recordId);
+            return true;
         }
     }
 
